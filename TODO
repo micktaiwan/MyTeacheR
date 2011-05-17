@@ -1,5 +1,8 @@
 TODO list.
 Each task is sorted by importance/priority (or ROI if you want), one relative to another
 
-- tests (TDD)
+- tests (TDD). Maybe with RSpec
+- choose a board representation
+  https://groups.google.com/group/rec.games.chess.computer/browse_frm/thread/2ffae88f631ac20d?pli=1
+  mailbox seems simpler and that's what TSCP is using
 
