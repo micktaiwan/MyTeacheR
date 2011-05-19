@@ -1,7 +1,6 @@
 MyTeacher - Ruby chess engine
 =============================
 
-
 The first version of MyTeacher was a chess program written in C++ based on TSCP
 (Tom's simple chess program) that played on FICS and gave some chat comments
 about opponents moves. I think it was appreciated by chess players on FICS
