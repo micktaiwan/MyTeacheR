@@ -1,0 +1,22 @@
+Licence
+=======
+
+GNU GPL 3
+http://www.gnu.org/licenses/gpl.html
+
+Thanks to
+=========
+
+I have been inspired (meaning I copied and adapted a lot of code) from RubyKnight
+https://github.com/cdmoyer/RubyKnight
+
+Other sources
+=============
+
+http://chessprogramming.wikispaces.com/   GREAT site for chess programming
+
+and everything on Wikipedia
+  http://en.wikipedia.org/wiki/Board_representation_(chess)
+  http://en.wikipedia.org/wiki/Bitboard
+  ...
+
