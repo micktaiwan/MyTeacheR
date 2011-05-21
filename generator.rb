@@ -13,6 +13,11 @@ private
     piece + (side == BLACK ? BLACKS_OFFSET : 0)
   end
 
+  def color(piece)
+    return WHITE if piece <= PAWN
+    return BLACK
+  end
+
   def gen_knights_moves(side)
     moves = []
     knights = @bitboards[colored_piece(KNIGHT,side)]
@@ -21,7 +26,7 @@ private
 				target = i+m
 				if target >= 0 and target <= 63 and ((target % 8) - (i % 8)).abs < 3
 					capture = piece_at(target)
-					moves << Move.new(colored_piece(KNIGHT,side), i, target, capture) if !capture or side!=capture[1]
+					moves << Move.new(colored_piece(KNIGHT,side), i, target, capture) if !capture or side!=color(capture)
 				end
 			end
       }
@@ -38,7 +43,7 @@ private
 			while limit > 0 and target >= 0 and target <= 63 and
   			   (rank == (target / 8) or file == (target % 8)) do
 				capture = piece_at(target)
-				if !capture or side != capture[1]
+				if !capture or side != color(capture)
           moves << Move.new(colored_piece(ROOK,side), index, target, capture)
         else
           break
@@ -54,7 +59,7 @@ private
 		moves = []
 		rooks = @bitboards[colored_piece(ROOK,side)]
 		indexes(rooks).each do |r|
-			moves += gen_rook_type_moves( @side, r)
+			moves += gen_rook_type_moves(@side, r)
 		end
 		moves
 	end
@@ -69,8 +74,8 @@ private
 			while limit > 0 and target >= 0 and target <= 63 and
 			      (lastrank - rank).abs == 1 do
 				capture = piece_at(target)
-				if !capture or side != capture[1]
-          moves << Move.new(colored_piece(BISHOP,side), index, target, capture) if !capture or side != capture[1]
+				if !capture or side != color(capture)
+          moves << Move.new(colored_piece(BISHOP,side), index, target, capture)
         else
           break
         end
