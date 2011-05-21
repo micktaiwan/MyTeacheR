@@ -17,6 +17,7 @@ class Search
 
   def play
     m = rand_move
+    return false if not m
     @position.make(m)
     @played_move = m
     true
@@ -24,7 +25,7 @@ class Search
 
   def rand_move
     moves = @position.gen_moves
-    raise "no more move possible" if moves.size == 0
+    return nil if moves.size == 0
     moves[rand(moves.size)]
   end
 
