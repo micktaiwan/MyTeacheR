@@ -2,9 +2,11 @@ module Constants
 
   WHITE, BLACK = 0, 1
   KING, QUEEN, ROOK, KNIGHT, BISHOP, PAWN = 0,1,2,3,4,5
+  WKING, WQUEEN, WROOK, WKNIGHT, WBISHOP, WPAWN = 0,1,2,3,4,5
+  BKING, BQUEEN, BROOK, BKNIGHT, BBISHOP, BPAWN = 6,7,8,9,10,11
   WHITE_KING,WHITE_QUEENS,WHITE_ROOKS,WHITE_KNIGHTS,WHITE_BISHOPS,WHITE_PAWNS = 0,1,2,3,4,5
   BLACK_KING,BLACK_QUEENS,BLACK_ROOKS,BLACK_KNIGHTS,BLACK_BISHOPS,BLACK_PAWNS = 6,7,8,9,10,11
-  BLACKS_OFFSET      = 6
+  BLACKS_OFFSET     = 6
   LAST_BOARD_INDEX  = 11
   CK    = 1 # castle white king side
   CQ    = 2 # castle white queen side
@@ -32,7 +34,7 @@ module Constants
     "a7","b7","c7","d7","e7","f7","g7","h7",
     "a8","b8","c8","d8","e8","f8","g8","h8"]
 
-  SYMBOLS = [ 'P','R','B','N','Q','K',
-		          'p','r','b','n','q','k']
+  SYMBOLS = [ 'K','Q','R','N','B','P',
+		          'k','q','r','n','b','p']
 end
 

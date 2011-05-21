@@ -1,22 +1,23 @@
-TODO list.
+TODO list
+=========
+
 Each task is sorted by importance/priority (or ROI if you want), one relative to another
 
-http://www.mizarchessengine.com/columns/writing-a-chess-engine/chess-engines-anatomy/
-
-OK tests (TDD). Maybe with RSpec
-OK choose a board representation => bitboards
-- Gtk interface
-- write utility function to translate FEN position into your chessboard representation
-- write moves generator
-- write function to understand if a square is attacked by a color
-- write functions to update your chessboard representation
-- Main check point 1: stop, write a Perft function and debug!
-- write a simple evaluation function
-- write a search function
-- optimiser (Quiescence search, etc...)
-- game interface
-- FICS interface
-- DB to store moves evaluations
+OK          - tests (TDD / RSpec) 19-May => 19-May
+OK          - choose a board representation => bitboards 19-May => 20-May
+In progress - write moves generator 21-May => ?
+            - write functions to update chessboard representation
+            - write a Perft function
+            - xboard interface
+            - write a search function with simple evaluation function
+            - play !
+            - optimisation (Quiescence search, etc...)
+            - play !
+            - write utility function to translate FEN position into your chessboard representation
+            - FICS interface
+            - play !
+            - DB to store moves evaluations
+            - ... and play !
 
 
 Board indexes
@@ -30,3 +31,4 @@ Board indexes
 16 17 18 19 20 21 22 23
 08 09 10 11 12 13 14 15
 00 01 02 03 04 05 06 07
+

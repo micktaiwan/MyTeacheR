@@ -7,16 +7,24 @@ http://www.gnu.org/licenses/gpl.html
 Thanks to
 =========
 
+21-May-2011:
 I have been inspired (meaning I copied and adapted a lot of code) from RubyKnight
+concerning move generation
+
 https://github.com/cdmoyer/RubyKnight
 
 Other sources
 =============
 
-http://chessprogramming.wikispaces.com/   GREAT site for chess programming
+http://chessprogramming.wikispaces.com/     GREAT site for chess programming
+http://www.frayn.net/beowulf/theory.html    Computer Chess Programming Theory
 
-and everything on Wikipedia
+
+Everything on Wikipedia :)
   http://en.wikipedia.org/wiki/Board_representation_(chess)
   http://en.wikipedia.org/wiki/Bitboard
   ...
+
+RubyKnight own references
+  https://github.com/cdmoyer/RubyKnight/blob/master/doc/reference_sites.txt
 

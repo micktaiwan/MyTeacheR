@@ -7,7 +7,7 @@ class Position
   include Constants
 
   attr_reader :white_king, :white_queens,:white_rooks,:white_bishops,:white_knights,:white_pawns,:black_king,:black_queens,:black_rooks,:black_bishops,:black_knights,:black_pawns,:all_pieces
-  attr_reader :played_move, :ply, :hply, :history, :side
+  attr_reader :ply, :hply, :history, :side
 
   def initialize
 		@bitboards = Array.new(LAST_BOARD_INDEX+1, 0)
@@ -27,7 +27,6 @@ class Position
     @fifty  = 0
     @ply    = 0
     @hply   = 0
-    @played_move    = nil
     @history = []
   end
 
@@ -49,31 +48,63 @@ class Position
     @bitboards[BLACK_BISHOPS] = 0b0010010000000000000000000000000000000000000000000000000000000000
     @bitboards[BLACK_QUEENS]  = 0b0000100000000000000000000000000000000000000000000000000000000000
     @bitboards[BLACK_KING]    = 0b0001000000000000000000000000000000000000000000000000000000000000
+    update_sum_boards
+  end
+
+  def update_sum_boards
     @all_whites     = (WHITE_KING..WHITE_PAWNS).inject(0) { |sum, index| @bitboards[index] + sum }
     @all_blacks     = (BLACK_KING..BLACK_PAWNS).inject(0) { |sum, index| @bitboards[index] + sum }
     @all_pieces     = @all_whites | @all_blacks
   end
 
-  def play
-    @ply += 1
-    @hply = @ply/2
-    m = Move.new
-    m.set(1,18) # Kc3
-    # m = Search.get_best_move
-    @history << m
-    @played_move = m
-    true
-  end
 
   def print_moves(moves)
-    moves.map { |m| "#{SQUARENAME[m[0]]}#{SQUARENAME[m[1]]}" }.join(", ")
+    moves.map { |m| "#{SQUARENAME[m.from]}#{SQUARENAME[m.to]}" }.join(", ")
   end
 
-private
+  def print_board
+    i = 0
+    (0..63).each { |i|
+      puts if i%8==0
+      p = piece_at(63-i)
+      if p
+        print SYMBOLS[p]
+      else
+        print '*'
+      end
+      }
+    puts
+  end
 
-	# give indexes of all ones in the bitboard
-	def indexes(bb)
-		(0..63).select {|i| ((1 << i) & bb) != 0}
+  def increment_ply
+    @ply += 1
+    @hply = @ply/2
+  end
+
+  def make(move)
+    raise "no move" if move.from==nil or move.to==nil
+	  unset(move.capture, move.to) if move.capture
+		unset(move.piece, move.from)
+		set(move.piece, move.to)
+    increment_ply
+    @history << move
+    @side = 1-@side
+  end
+
+	def set(piece, *indexes)
+		indexes.each do |i|
+  		pos = (1 << i)
+      @bitboards[piece] |= pos
+		end
+    update_sum_boards
+	end
+
+	def unset(piece, *indexes)
+		indexes.each do |i|
+			pos = ~(1 << i)
+			@bitboards[piece] &= pos
+		end
+    update_sum_boards
 	end
 
 	def piece_at(index)
@@ -81,15 +112,20 @@ private
 		if @all_pieces & bit > 0
   		if @all_whites & bit > 0
   		  (KING..PAWN).each { |piece|
-    			return [piece,WHITE] if (@bitboards[piece] & bit) > 0
+    			return piece if (@bitboards[piece] & bit) > 0
     			}
   		elsif @all_blacks & bit > 0
-  		  (KING..PAWN).each { |piece|
-    			return [piece,BLACK] if (@bitboards[piece+BLACKS_OFFSET] & bit) > 0
+  		  (BKING..BPAWN).each { |piece|
+    			return piece if (@bitboards[piece] & bit) > 0
     			}
   		end
 		end
 		return nil
+	end
+
+	# give indexes of all ones in the bitboard
+	def indexes(bb)
+		(0..63).select {|i| ((1 << i) & bb) != 0}
 	end
 
 end
