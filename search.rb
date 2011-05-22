@@ -12,11 +12,11 @@ class Search
 
   def initialize(position)
     @position    = position
-    @played_move = nil
     @moves = []
   end
 
   def play
+    @played_move = nil
     m = rand_move
     return false if not m
     @position.make(m)
@@ -25,7 +25,7 @@ class Search
   end
 
   def rand_move
-    @moves = @position.gen_moves
+    @moves = @position.gen_legal_moves
     return nil if @moves.size == 0
     @moves[rand(moves.size)]
   end

@@ -7,12 +7,9 @@ module Constants
   WHITE_KING,WHITE_QUEENS,WHITE_ROOKS,WHITE_KNIGHTS,WHITE_BISHOPS,WHITE_PAWNS = 0,1,2,3,4,5
   BLACK_KING,BLACK_QUEENS,BLACK_ROOKS,BLACK_KNIGHTS,BLACK_BISHOPS,BLACK_PAWNS = 6,7,8,9,10,11
   BLACKS_OFFSET     = 6
-  LAST_BOARD_INDEX  = 11
+  LAST_BOARD_INDEX = CAN_CASTLE = 11
   ENPASSANT = 14
-  CK    = 1 # castle white king side
-  CQ    = 2 # castle white queen side
-  Ck    = 4 # castle black king side
-  Cq    = 8 # castle black queen side
+  QUEENSIDE, KINGSIDE = 0, 1
 
 
   A8 = 56; B8 = 57; C8 = 58; D8 = 59; E8 = 60; F8 = 61; G8 = 62; H8 = 63;

@@ -18,16 +18,12 @@ class Position
     (WHITE_KING..BLACK_PAWNS).each { |i|
       @bitboards[i] = 0
       }
-    @all_whites     = 0
-    @all_blacks     = 0
-    @all_pieces     = 0
+    @all_whites = @all_blacks = @all_pieces = 0
     @side   = WHITE
-    @castle = CK|CQ|Ck|Cq
     @ep     = -1
-    @fifty  = 0
-    @ply    = 0
-    @hply   = 0
+    @fifty  = @ply = @hply = 0
     @history = []
+    @bitboards[CAN_CASTLE] = 0x000F # 1111
   end
 
   def is_empty?
@@ -69,9 +65,13 @@ class Position
       (0..7).each { |j|
         p = piece_at(i+j)
         if p
-          print SYMBOLS[p]
+          print ' ' + SYMBOLS[p] + ' |'
         else
-          print '*'
+          if (i+j)%2 == 0
+            print '   |'
+          else
+            print '   |' # white
+          end
         end
         }
       puts
@@ -79,9 +79,14 @@ class Position
     puts
   end
 
-  def increment_ply
-    @ply += 1
+  def increment_ply(inc=1)
+    @ply += inc
     @hply = @ply/2
+  end
+
+  def move_piece(piece, from, to)
+		unset(piece, from)
+    set(piece, to)
   end
 
   def make(move)
@@ -93,10 +98,80 @@ class Position
 		else
 		  set(move.promotion, move.to)
 		end
+
+		# handle castling
+		if(piece_type(move.piece) == KING and (move.to - move.from).abs == 2)
+		  puts "castling!"
+			case move.to
+				when 62
+					move_piece(BROOK, 63, 61)
+				when 58
+					move_piece(BROOK, 56, 59)
+				when 2
+					move_piece(WROOK, 0, 3)
+				when 6
+					move_piece(WROOK, 7, 5)
+			end
+		end
+
+		# mark no-longer-possible castles
+		move.can_castle = @bitboards[CAN_CASTLE] # backup
+		if move.piece == BKING
+			@bitboards[CAN_CASTLE] &= ~(1|2)
+		elsif move.piece == BROOK and move.from == 56
+			@bitboards[CAN_CASTLE] &= ~(1)
+		elsif move.piece == BROOK and move.from == 63
+			@bitboards[CAN_CASTLE] &= ~(2)
+		elsif move.piece == WKING
+			@bitboards[CAN_CASTLE] &= ~(4|8)
+		elsif move.piece == WROOK and move.from == 0
+			@bitboards[CAN_CASTLE] &= ~(4)
+		elsif move.piece == WROOK and move.from == 7
+			@bitboards[CAN_CASTLE] &= ~(8)
+		end
+
+		mark_enpassant(move.piece, move.from, move.to)
+
     increment_ply
     @history << move
     @side = 1-@side
   end
+
+  def unmake
+		move = @history.pop
+		return unless move
+		set(move.piece, move.from)
+
+		if(move.promotion) then unset(move.promotion, move.to)
+		else unset(move.piece, move.to) end
+
+		if(move.capture) then set(move.capture, move.to) end
+
+		if last = @history.last
+			mark_enpassant(last.piece, last.from, last.to)
+		else
+			mark_enpassant(nil, nil, nil)
+		end
+
+		# handle castling
+		@bitboards[CAN_CASTLE] = move.can_castle
+		# are we castling?
+		if(piece_type(move.piece) == KING and (move.to - move.to).abs == 2)
+			case move.to
+				when 62
+					move_piece(BROOK, 61, 63)
+				when 58
+					move_piece(BROOK, 59, 56)
+				when 2
+					move_piece(WROOK, 3, 0)
+				when 6
+					move_piece(WROOK, 5, 7)
+			end
+		end
+
+    increment_ply(-1)
+		@side = 1-@side
+	end
 
 	def set(piece, *indexes)
 		indexes.each do |i|
@@ -113,6 +188,22 @@ class Position
 		end
     update_sum_boards
 	end
+
+	def mark_enpassant(last_piece, last_orig, last_dest)
+		if last_piece == BPAWN and last_orig > 47 and last_orig < 56 and
+			@bitboards[ENPASSANT] = ( 1 << last_orig+8)
+		elsif last_piece == WPAWN and last_orig > 7 and last_orig < 16 and
+			@bitboards[ENPASSANT] = ( 1 << last_orig+8)
+		else
+			@bitboards[ENPASSANT] = 0
+		end
+	end
+
+
+  def piece_type(piece)
+    return piece if piece < BLACKS_OFFSET
+    piece - BLACKS_OFFSET
+  end
 
 	def piece_at(index)
 		bit = (1 << index)
@@ -133,6 +224,10 @@ class Position
 	# give indexes of all ones in the bitboard
 	def indexes(bb)
 		(0..63).select {|i| ((1 << i) & bb) != 0}
+	end
+
+	def can_castle(side, castle_side)
+		@bitboards[CAN_CASTLE] & (1 << ((side * 2)+castle_side)) > 0
 	end
 
 end

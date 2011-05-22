@@ -35,5 +35,16 @@ describe Position, "just created" do
     @p.piece_at(B1).should eq nil
   end
 
+  it "should unmake correctly" do
+    @p.reset_to_starting_position
+    move = Move.new(KNIGHT, B1, C3)
+    @p.make(move)
+    lambda { @p.unmake }.should_not raise_error
+    @p.all_pieces.should == INIT_POSITION
+    # another unnessassary unmake
+    lambda { @p.unmake }.should_not raise_error
+  end
+
+
 end
 

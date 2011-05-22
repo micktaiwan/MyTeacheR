@@ -1,10 +1,30 @@
+# almost everything comes from "RubyKight" code
+
 class Position
 
+	# generate only legal moves
+	def gen_legal_moves(side=@side)
+		moves = gen_moves(side)
+		nb = moves.size
+		moves = prune_king_revealers(side,moves)
+		to_del = moves.size-nb
+		puts "pseudo moves: #{nb} - #{to_del} = #{moves.size} legal moves" if to_del > 0
+		moves
+	end
+
+	def gen_legal_moves_2(side=@side)
+		prune_king_revealers(side,gen_moves(side))
+	end
+
+
   # generate pseudo legal moves
-  def gen_moves
-    gen_knights_moves(@side) + gen_rooks_moves(@side) + gen_bishops_moves(@side) +
-    gen_queens_moves(@side) +
-    gen_pawn_moves(@side)
+  def gen_moves(side=@side)
+    gen_knights_moves(side) +
+    gen_rooks_moves(side) +
+    gen_bishops_moves(side) +
+    gen_queens_moves(side) +
+    gen_pawns_moves(side) +
+    gen_king_moves(side)
   end
 
 private
@@ -43,8 +63,11 @@ private
       while limit > 0 and target >= 0 and target <= 63 and
            (rank == (target / 8) or file == (target % 8)) do
         capture = piece_at(target)
-        if !capture or side != color(capture)
+        if !capture
           moves << Move.new(colored_piece(piece,side), index, target, capture)
+        elsif side != color(capture)
+          moves << Move.new(colored_piece(piece,side), index, target, capture)
+          break
         else
           break
         end
@@ -74,7 +97,9 @@ private
       while limit > 0 and target >= 0 and target <= 63 and
             (lastrank - rank).abs == 1 do
         capture = piece_at(target)
-        if !capture or side != color(capture)
+        if !capture
+          moves << Move.new(colored_piece(piece,side), index, target, capture)
+        elsif side != color(capture)
           moves << Move.new(colored_piece(piece,side), index, target, capture)
         else
           break
@@ -107,7 +132,7 @@ private
 		moves
 	end
 
-	def gen_pawn_moves(side)
+	def gen_pawns_moves(side)
 		pawns = @bitboards[colored_piece(PAWN, side)]
 		if side==BLACK
 			in_front_int = -8
@@ -175,7 +200,7 @@ private
 				  end
 				end
 			end
-			#check en-passant
+			#check en-passant # TODO: @bitboards[ENPASSANT] is never set :)
 			if @bitboards[ENPASSANT] != 0
 				passant = indexes(@bitboards[ENPASSANT]).first
 				if (p + attack_right) == passant or (p + attack_left) == passant
@@ -188,6 +213,70 @@ private
 		indexes(pawns).each do |p|
 			moves += do_pawn.call(p)
 		end
+		moves
+	end
+
+
+	def gen_castle_moves(side, king_index)
+		goodcastles = []
+		# kingside
+		kpiece = colored_piece(KING,side)
+		if can_castle(side, KINGSIDE)
+			test = if(side==BLACK) then [60,61,62]; else [4,5,6] end
+
+		  # FIXME: repeated code
+		  if !piece_at(test[1]) and !piece_at(test[2])
+			  left = prune_king_revealers(side, test.map {|dest| Move.new(kpiece, king_index, dest)})
+			  if left.size == test.size
+				  goodcastles << Move.new(kpiece, king_index, test.last)
+			  end
+		  end
+
+		end
+
+		# queenside
+		if can_castle(side, QUEENSIDE)
+			test = if(side==BLACK) then [60,59,58]; else [4,3,2] end
+
+		  # FIXME: repeated code
+		  if !piece_at(test[1]) and !piece_at(test[2])
+			  left = prune_king_revealers(side, test.map {|dest| Move.new(kpiece, king_index, dest)})
+			  if left.size == test.size
+				  goodcastles << Move.new(kpiece, king_index, test.last)
+			  end
+		  end
+
+		end
+    puts "I have #{goodcastles.size} goodcastles" if goodcastles.size > 0
+		goodcastles
+	end
+
+	def prune_king_revealers(side, moves)
+	  #puts "prune_king_revealers: #{side}, #{moves.size} moves"
+		kpiece = colored_piece(KING,side)
+		moves.select do |m|
+			make(m)
+			next_moves = gen_moves(1-side)
+			king = indexes(@bitboards[kpiece])
+			select_ret = true
+			next_moves.each do |m|
+				if m.to == king
+					select_ret = false
+					break
+				end
+			end
+			unmake
+			select_ret
+		end
+	end
+
+	def gen_king_moves(side)
+		moves = []
+		king_i = indexes(@bitboards[colored_piece(KING, side)])[0]
+		return [] if king_i == nil
+		moves += gen_rook_type_moves(side, king_i, KING, 1)
+		moves += gen_bishop_type_moves(side, king_i, KING, 1)
+		moves += gen_castle_moves(side, king_i)
 		moves
 	end
 

@@ -24,7 +24,7 @@ describe Search, "just created" do
   it "should generate 20 moves at starting position" do
     @p.reset_to_starting_position
     moves = @p.gen_moves
-    print @p.print_moves(moves)+ " "
+    #print @p.print_moves(moves)+ " "
     moves.size.should eq 20
   end
 
