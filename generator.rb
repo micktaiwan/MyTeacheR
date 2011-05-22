@@ -2,7 +2,7 @@ class Position
 
   # generate pseudo legal moves
   def gen_moves
-    gen_knights_moves(@side) + gen_rooks_moves(@side) + gen_bishops_moves(@side)
+    gen_knights_moves(@side) + gen_rooks_moves(@side) + gen_bishops_moves(@side) + gen_queens_moves(@side)
   end
 
 private
@@ -31,7 +31,7 @@ private
     moves
   end
 
-  def gen_rook_type_moves(side, index, start_limit = 8)
+  def gen_rook_type_moves(side, index, piece, start_limit = 8)
     moves = []
     rank = index / 8
     file = index % 8
@@ -42,7 +42,7 @@ private
            (rank == (target / 8) or file == (target % 8)) do
         capture = piece_at(target)
         if !capture or side != color(capture)
-          moves << Move.new(colored_piece(ROOK,side), index, target, capture)
+          moves << Move.new(colored_piece(piece,side), index, target, capture)
         else
           break
         end
@@ -57,12 +57,12 @@ private
     moves = []
     rooks = @bitboards[colored_piece(ROOK,side)]
     indexes(rooks).each do |r|
-      moves += gen_rook_type_moves(@side, r)
+      moves += gen_rook_type_moves(@side, r, ROOK)
     end
     moves
   end
 
-  def gen_bishop_type_moves(side, index, start_limit = 8)
+  def gen_bishop_type_moves(side, index, piece, start_limit = 8)
     moves = []
     [-9,-7,7,9].each do |inc|
       limit = start_limit
@@ -73,7 +73,7 @@ private
             (lastrank - rank).abs == 1 do
         capture = piece_at(target)
         if !capture or side != color(capture)
-          moves << Move.new(colored_piece(BISHOP,side), index, target, capture)
+          moves << Move.new(colored_piece(piece,side), index, target, capture)
         else
           break
         end
@@ -86,13 +86,24 @@ private
     moves
   end
 
-  def gen_bishops_moves white
+  def gen_bishops_moves(side)
     moves = []
     bishops = @bitboards[colored_piece(BISHOP,side)]
     indexes(bishops).each do |r|
-      moves += gen_bishop_type_moves(@side, r)
+      moves += gen_bishop_type_moves(side, r, BISHOP)
     end
     moves
   end
+
+  def gen_queens_moves(side)
+		moves = []
+		queens = @bitboards[colored_piece(QUEEN,side)]
+		indexes(queens).each do |r|
+			moves += gen_rook_type_moves(side, r, QUEEN)
+			moves += gen_bishop_type_moves(side, r, QUEEN)
+		end
+		moves
+	end
+
 end
 

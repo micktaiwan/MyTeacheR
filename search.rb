@@ -8,11 +8,12 @@ class Search
 
   include Constants
 
-  attr_reader :played_move, :position
+  attr_reader :played_move, :position, :moves
 
   def initialize(position)
     @position    = position
     @played_move = nil
+    @moves = []
   end
 
   def play
@@ -24,9 +25,9 @@ class Search
   end
 
   def rand_move
-    moves = @position.gen_moves
-    return nil if moves.size == 0
-    moves[rand(moves.size)]
+    @moves = @position.gen_moves
+    return nil if @moves.size == 0
+    @moves[rand(moves.size)]
   end
 
 end

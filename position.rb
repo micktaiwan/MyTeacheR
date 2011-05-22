@@ -64,14 +64,16 @@ class Position
 
   def print_board
     i = 0
-    (0..63).each { |i|
-      puts if i%8==0
-      p = piece_at(63-i)
-      if p
-        print SYMBOLS[p]
-      else
-        print '*'
-      end
+    [56,48,40,32,24,16,8,0].each { |i|
+      (0..7).each { |j|
+        p = piece_at(i+j)
+        if p
+          print SYMBOLS[p]
+        else
+          print '*'
+        end
+        }
+      puts
       }
     puts
   end
