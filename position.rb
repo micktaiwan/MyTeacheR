@@ -48,6 +48,7 @@ class Position
     @bitboards[BLACK_BISHOPS] = 0b0010010000000000000000000000000000000000000000000000000000000000
     @bitboards[BLACK_QUEENS]  = 0b0000100000000000000000000000000000000000000000000000000000000000
     @bitboards[BLACK_KING]    = 0b0001000000000000000000000000000000000000000000000000000000000000
+    @bitboards[ENPASSANT]     = 0
     update_sum_boards
   end
 
@@ -87,7 +88,11 @@ class Position
     raise "no move" if move.from==nil or move.to==nil
 	  unset(move.capture, move.to) if move.capture
 		unset(move.piece, move.from)
-		set(move.piece, move.to)
+		if !move.promotion
+		  set(move.piece, move.to)
+		else
+		  set(move.promotion, move.to)
+		end
     increment_ply
     @history << move
     @side = 1-@side

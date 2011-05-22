@@ -6,14 +6,11 @@ class Move
 	attr_accessor :piece, :from, :to, :capture, :promotion
 
   def initialize(piece=nil, from=nil, to=nil, capture=nil, promotion=nil)
-		@piece      = piece
+		@piece      = piece # WKING to BPAWN
     @from       = from
     @to         = to
-		@capture    = capture
-		@promotion  = promotion
-		#@forward    = (@piece == WPAWN and @to == 8 or @piece == BPAWN and @to == 1)
-		# if forward, then @from is the @piece, @promotion is the target on @to
-		# if !forward, the move is backward (!) and @piece is the origin
+		@capture    = capture # WKING to BPAWN
+		@promotion  = promotion # WQUEEN..WBISHOP AND BQUEEN..BBISHOP
   end
 
   def set(from, to)
