@@ -1,4 +1,5 @@
 require 'position'
+require 'search'
 include Constants
 
 
@@ -8,6 +9,7 @@ describe Position, "just created" do
 
   before(:all) do
     @p = Position.new
+    @s = Search.new(@p)
   end
 
   it "should be initialized with starting position" do
@@ -37,9 +39,8 @@ describe Position, "just created" do
 
   it "should unmake correctly" do
     @p.reset_to_starting_position
-    move = Move.new(KNIGHT, B1, C3)
-    @p.make(move)
-    lambda { @p.unmake }.should_not raise_error
+    20.times{@s.play}
+    20.times{@p.unmake}
     @p.all_pieces.should == INIT_POSITION
     # another unnessassary unmake
     lambda { @p.unmake }.should_not raise_error

@@ -135,31 +135,31 @@ private
 	def gen_pawns_moves(side)
 		pawns = @bitboards[colored_piece(PAWN, side)]
 		if side==BLACK
-			in_front_int = -8
-			second_rank_high = 56
-			second_rank_low = 47
-			two_away_int = -16
-			attack_left = -9
-			attack_right = -7
-			promote_low = -1
-			promote_high = 8
-			promotes = [BROOK, BQUEEN, BKNIGHT, BBISHOP]
+			in_front_int      = -8
+			second_rank_high  = 56
+			second_rank_low   = 47
+			two_away_int      = -16
+			attack_left       = -9
+			attack_right      = -7
+			promote_low       = -1
+			promote_high      = 8
+			promotes          = [BROOK, BQUEEN, BKNIGHT, BBISHOP]
 		else
-			in_front_int = 8
-			second_rank_high = 16
-			second_rank_low = 7
-			two_away_int = 16
-			attack_left = 7
-			attack_right = 9
-			promote_low = 55
-			promote_high = 64
-			promotes = [WROOK, WQUEEN, WKNIGHT, WBISHOP]
+			in_front_int      = 8
+			second_rank_high  = 16
+			second_rank_low   = 7
+			two_away_int      = 16
+			attack_left       = 7
+			attack_right      = 9
+			promote_low       = 55
+			promote_high      = 64
+			promotes          = [WROOK, WQUEEN, WKNIGHT, WBISHOP]
 		end
 		do_pawn = Proc.new do |p|
 			possible = []
-			in_front = piece_at( p + in_front_int)
+			in_front = piece_at(p+in_front_int)
 			#single step + promotion
-			if  !in_front
+			if !in_front
 				in_front_pos = p + in_front_int
 				possible << Move.new(colored_piece(PAWN,side),p,in_front_pos)
 				if in_front_pos > promote_low and in_front_pos < promote_high
@@ -169,8 +169,7 @@ private
 				end
 			end
 			#double jump
-			if p < second_rank_high and p > second_rank_low and !in_front and
-			   !piece_at( p + two_away_int)
+			if p < second_rank_high and p > second_rank_low and !in_front and !piece_at(p+two_away_int)
         possible << Move.new(colored_piece(PAWN,side),p, p+two_away_int)
 			end
 			#captures
@@ -200,7 +199,7 @@ private
 				  end
 				end
 			end
-			#check en-passant # TODO: @bitboards[ENPASSANT] is never set :)
+			#check en-passant
 			if @bitboards[ENPASSANT] != 0
 				passant = indexes(@bitboards[ENPASSANT]).first
 				if (p + attack_right) == passant or (p + attack_left) == passant
@@ -224,26 +223,22 @@ private
 		if can_castle(side, KINGSIDE)
 			test = if(side==BLACK) then [60,61,62]; else [4,5,6] end
 
-		  # FIXME: repeated code
 		  if !piece_at(test[1]) and !piece_at(test[2])
+  		  # FIXME: repeated code
 			  left = prune_king_revealers(side, test.map {|dest| Move.new(kpiece, king_index, dest)})
-			  if left.size == test.size
-				  goodcastles << Move.new(kpiece, king_index, test.last)
-			  end
+			  goodcastles << Move.new(kpiece, king_index, test.last) if left.size == test.size
 		  end
 
 		end
 
 		# queenside
 		if can_castle(side, QUEENSIDE)
-			test = if(side==BLACK) then [60,59,58]; else [4,3,2] end
+			test = if(side==BLACK) then [60,59,58]; extra = 57; else [4,3,2]; extra = 1 end
 
-		  # FIXME: repeated code
-		  if !piece_at(test[1]) and !piece_at(test[2])
+		  if !piece_at(test[1]) and !piece_at(test[2]) and !piece_at(extra)
+  		  # FIXME: repeated code
 			  left = prune_king_revealers(side, test.map {|dest| Move.new(kpiece, king_index, dest)})
-			  if left.size == test.size
-				  goodcastles << Move.new(kpiece, king_index, test.last)
-			  end
+        goodcastles << Move.new(kpiece, king_index, test.last) if left.size == test.size
 		  end
 
 		end

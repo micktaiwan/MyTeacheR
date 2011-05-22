@@ -23,7 +23,6 @@ class Position
     @ep     = -1
     @fifty  = @ply = @hply = 0
     @history = []
-    @bitboards[CAN_CASTLE] = 0x000F # 1111
   end
 
   def is_empty?
@@ -45,6 +44,7 @@ class Position
     @bitboards[BLACK_QUEENS]  = 0b0000100000000000000000000000000000000000000000000000000000000000
     @bitboards[BLACK_KING]    = 0b0001000000000000000000000000000000000000000000000000000000000000
     @bitboards[ENPASSANT]     = 0
+    @bitboards[CAN_CASTLE]    = 0x000F # 1111
     update_sum_boards
   end
 
@@ -101,7 +101,6 @@ class Position
 
 		# handle castling
 		if(piece_type(move.piece) == KING and (move.to - move.from).abs == 2)
-		  puts "castling!"
 			case move.to
 				when 62
 					move_piece(BROOK, 63, 61)
@@ -140,12 +139,12 @@ class Position
   def unmake
 		move = @history.pop
 		return unless move
-		set(move.piece, move.from)
 
 		if(move.promotion) then unset(move.promotion, move.to)
 		else unset(move.piece, move.to) end
+		set(move.piece, move.from)
 
-		if(move.capture) then set(move.capture, move.to) end
+		set(move.capture, move.to) if(move.capture)
 
 		if last = @history.last
 			mark_enpassant(last.piece, last.from, last.to)

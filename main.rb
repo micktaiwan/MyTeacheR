@@ -28,11 +28,11 @@ class MyTeacher
         min_moves = nb_moves if nb_moves < min_moves and nb_moves > 0
         total_moves += nb_moves
         moy = total_moves.to_f / @p.ply
-        #puts "#{@p.hply+1}. #{@s.played_move} (nb moves: #{nb_moves}, moy: #{moy})"
 
-        #@p.print_board
+        puts "#{@p.hply+1}. #{@s.played_move} (nb moves: #{nb_moves}, moy: #{moy})"
+        @p.print_board
         #sleep(0.1)
-        #gets
+        gets
         #print @p.ply.to_s+ " "
         #STDOUT.flush
         break if @p.hply >= 300
