@@ -9,7 +9,7 @@ class MyTeacher
   def initialize
     @p = Position.new
     @s = Search.new(@p)
-    @p.print_board
+    @p.printp
     puts
   end
 
@@ -29,9 +29,9 @@ class MyTeacher
         total_moves += nb_moves
         moy = total_moves.to_f / @p.ply
 
-        puts "#{@p.hply+1}. #{@s.played_move} (nb moves: #{nb_moves}, moy: #{moy})"
-        @p.print_board
-        #sleep(0.1)
+        puts "#{@p.hply+1}. #{@s.played_move} (nb moves: #{nb_moves}, moy: #{moy}) hclock=#{@p.hclock}"
+        @p.printp
+        sleep(0.1)
         gets
         #print @p.ply.to_s+ " "
         #STDOUT.flush

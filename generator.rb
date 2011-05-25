@@ -215,7 +215,6 @@ private
 		moves
 	end
 
-
 	def gen_castle_moves(side, king_index)
 		goodcastles = []
 		# kingside
@@ -233,7 +232,13 @@ private
 
 		# queenside
 		if can_castle(side, QUEENSIDE)
-			test = if(side==BLACK) then [60,59,58]; extra = 57; else [4,3,2]; extra = 1 end
+			if(side==BLACK)
+			  test = [60,59,58]
+			  extra = 57
+			else
+			  test = [4,3,2]
+			  extra = 1
+			end
 
 		  if !piece_at(test[1]) and !piece_at(test[2]) and !piece_at(extra)
   		  # FIXME: repeated code
@@ -242,7 +247,7 @@ private
 		  end
 
 		end
-    puts "I have #{goodcastles.size} goodcastles" if goodcastles.size > 0
+    #puts "I have #{goodcastles.size} goodcastles" if goodcastles.size > 0
 		goodcastles
 	end
 

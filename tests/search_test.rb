@@ -15,9 +15,9 @@ describe Search, "just created" do
     m.from.should > 0
     #m.to_s.should eq("b1c3")
     @p.ply.should  eq 1
-    @p.hply.should eq 0
+    @p.hply.should eq 1
     @p.history.size.should eq 1
-    @p.history[0].should eq m
+    @p.history[0][0].should eq m
     @p.side.should eq BLACK
   end
 

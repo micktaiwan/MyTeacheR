@@ -1,27 +1,30 @@
 require 'constants'
+require 'utils'
 require 'move'
 load './generator.rb'
 
 class Position
 
   include Constants
+  include MyTeacherUtils
 
-  attr_reader :white_king, :white_queens,:white_rooks,:white_bishops,:white_knights,:white_pawns,:black_king,:black_queens,:black_rooks,:black_bishops,:black_knights,:black_pawns,:all_pieces
-  attr_reader :ply, :hply, :history, :side
+  attr_reader :all_pieces, :bitboards
+  attr_reader :ply, :hply, :history, :side, :hclock
 
   def initialize
 		@bitboards = Array.new(LAST_BOARD_INDEX+1, 0)
     reset_to_starting_position
   end
 
-  def empty_position!
+  def empty!
     (WHITE_KING..BLACK_PAWNS).each { |i|
       @bitboards[i] = 0
       }
     @all_whites = @all_blacks = @all_pieces = 0
     @side   = WHITE
     @ep     = -1
-    @fifty  = @ply = @hply = 0
+    @ply = @hclock = 0
+    @hply = 1
     @history = []
   end
 
@@ -30,7 +33,7 @@ class Position
   end
 
   def reset_to_starting_position
-    empty_position!
+    empty!
     @bitboards[WHITE_PAWNS]   = 0b0000000000000000000000000000000000000000000000001111111100000000
     @bitboards[WHITE_ROOKS]   = 0b0000000000000000000000000000000000000000000000000000000010000001
     @bitboards[WHITE_KNIGHTS] = 0b0000000000000000000000000000000000000000000000000000000001000010
@@ -54,12 +57,42 @@ class Position
     @all_pieces     = @all_whites | @all_blacks
   end
 
+	def dump
+		@bitboards[@bitboards.size] = @history
+		@bitboards[@bitboards.size] = @side
+		@bitboards[@bitboards.size] = @hply
+		@bitboards[@bitboards.size] = @ply
+		@bitboards[@bitboards.size] = @hclock
+		ret = Marshal.dump(@bitboards)
+		(1..5).each { @bitboards.delete_at(@bitboards.size-1) }
+		ret
+	end
+
+	def load(dmp)
+		@bitboards  = Marshal.load( dmp)
+		@hclock     = @bitboards.pop
+		@ply        = @bitboards.pop
+		@hply       = @bitboards.pop
+		@side       = @bitboards.pop
+		@history    = @bitboards.pop
+		update_sum_boards
+		self
+	end
+
+	def ==(pos)
+	  @all_pieces == pos.all_pieces and
+		@history == pos.history and
+		@side == pos.side and
+		@hply == pos.hply and
+		@ply == pos.ply and
+		@hclock == pos.hclock
+	end
 
   def print_moves(moves)
     moves.map { |m| "#{SQUARENAME[m.from]}#{SQUARENAME[m.to]}" }.join(", ")
   end
 
-  def print_board
+  def printp
     i = 0
     [56,48,40,32,24,16,8,0].each { |i|
       (0..7).each { |j|
@@ -81,7 +114,7 @@ class Position
 
   def increment_ply(inc=1)
     @ply += inc
-    @hply = @ply/2
+    @hply = @ply/2 + 1
   end
 
   def move_piece(piece, from, to)
@@ -129,15 +162,19 @@ class Position
 			@bitboards[CAN_CASTLE] &= ~(8)
 		end
 
+    if piece_type(move.piece) != PAWN and move.capture == nil
+      @hclock += 1
+    else
+      @hclock = 0
+    end
+    @history << [move, @hclock]
 		mark_enpassant(move.piece, move.from, move.to)
-
     increment_ply
-    @history << move
     @side = 1-@side
   end
 
   def unmake
-		move = @history.pop
+		move, = @history.pop
 		return unless move
 
 		if(move.promotion) then unset(move.promotion, move.to)
@@ -146,16 +183,10 @@ class Position
 
 		set(move.capture, move.to) if(move.capture)
 
-		if last = @history.last
-			mark_enpassant(last.piece, last.from, last.to)
-		else
-			mark_enpassant(nil, nil, nil)
-		end
-
 		# handle castling
 		@bitboards[CAN_CASTLE] = move.can_castle
 		# are we castling?
-		if(piece_type(move.piece) == KING and (move.to - move.to).abs == 2)
+		if(piece_type(move.piece) == KING and (move.to - move.from).abs == 2)
 			case move.to
 				when 62
 					move_piece(BROOK, 61, 63)
@@ -168,6 +199,13 @@ class Position
 			end
 		end
 
+		if last = @history.last
+			mark_enpassant(last[0].piece, last[0].from, last[0].to)
+    	@hclock = last[1]
+		else
+			mark_enpassant(nil, nil, nil)
+    	@hclock = 0
+		end
     increment_ply(-1)
 		@side = 1-@side
 	end
@@ -198,7 +236,6 @@ class Position
 		end
 	end
 
-
   def piece_type(piece)
     return piece if piece < BLACKS_OFFSET
     piece - BLACKS_OFFSET
@@ -227,6 +264,99 @@ class Position
 
 	def can_castle(side, castle_side)
 		@bitboards[CAN_CASTLE] & (1 << ((side * 2)+castle_side)) > 0
+	end
+
+  # return the number of piece in this position
+  def num_pieces(piece)
+    indexes(@bitboards[piece]).size
+  end
+
+	# Load Forsyth-Edwards Notation (FEN)
+	def load_fen(str)
+	  empty!
+	  state = :pieces
+	  castle = 0
+	  i   = 0
+	  pos = 56
+	  loop do
+	    if str[i].chr == ' '
+	      case state
+        when :pieces
+          state = :side
+        when :side
+          state = :castle
+        when :castle
+    	    state = :enpassant
+        when :enpassant
+    	    state = :hclock
+        when :hclock
+    	    state = :ply
+    	  end
+        i += 1
+    	end
+    	case state
+	    when :pieces
+	      c = str[i]
+	      case
+        when c.chr == '/'
+          i += 1
+          pos -= 8*2
+        when (c.chr >= 'B' and c.chr <='r')
+          set(symbol_to_piece(c.chr), pos)
+          i += 1
+          pos += 1
+        when (c.chr >= '1' and c.chr <= '8')
+          i += 1
+          pos += (c - 48)
+        else
+          raise "can not read this FEN position. c=#{c}/#{c.chr}, FEN=#{str}"
+        end
+      when :side
+        @side = (str[i].chr=='w')? WHITE : BLACK
+        i += 1
+      when :castle
+        loop do
+          case str[i].chr
+          when ' '
+            break
+          when '-'
+            i += 1
+            break
+          when 'Q'
+            castle |= 1
+          when 'K'
+            castle |= 2
+          when 'q'
+            castle |= 4
+          when 'k'
+            castle |= 8
+          else
+            raise "can not read this FEN position, because of encastle right misreading #{str}"
+          end
+          i += 1
+        end
+      when :enpassant
+    	  c = str[i,2]
+    	  if c == "- "
+    			@bitboards[ENPASSANT] = 0
+          i += 1
+    	  else
+    			@bitboards[ENPASSANT] = ( 1 << case_to_index(c))
+          i += 2
+    	  end
+      when :hclock
+    	  @hclock = str[i,2].scan(/\d+/)[0].to_i
+        i += @hclock.to_s.size
+    	when :ply
+    	  @ply = str[i,3].scan(/\d+/)[0].to_i
+    	  @hply = ((@ply-1) * 2) + ((@side == BLACK)? 1 : 0)
+    	  break
+    	else
+        raise "can not read this FEN position #{str}"
+    	end
+    end
+    update_sum_boards
+    @bitboards[CAN_CASTLE] = castle
 	end
 
 end
