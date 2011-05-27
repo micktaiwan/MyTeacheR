@@ -39,7 +39,7 @@ class Perft
   def perft(p, depth=3, cur_depth=1)
     total = 0
     return 1 if depth == 0 # should never go there
-    m = @p.gen_moves
+    m = @p.gen_legal_moves # until perf(3) gen_moves is sufficient
     i = m.size
     return total+i if depth == 1
     puts "depth = #{depth}. #{i} moves" if cur_depth < 4

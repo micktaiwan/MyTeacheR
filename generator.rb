@@ -101,6 +101,7 @@ private
           moves << Move.new(colored_piece(piece,side), index, target, capture)
         elsif side != color(capture)
           moves << Move.new(colored_piece(piece,side), index, target, capture)
+          break
         else
           break
         end

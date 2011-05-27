@@ -12,42 +12,53 @@ class Search
   attr_reader :played_move, :position, :moves
 
   def initialize(position)
-    @position    = position
+    @p    = position
     @moves = []
   end
 
-  def play
+  def play(type=:depth_first)
     @played_move = nil
 
     # type of play depends of the function used
     # random_move, simple
-    m = depth_first
+    m = case type
+      when :depth_first
+        depth_first
+      when :random
+        random_move
+      else
+        raise "unknown type of play '#{type.to_s}'"
+      end
 
     return false if not m
-    @position.make(m)
+    @p.make(m)
     @played_move = m
     true
   end
 
   def random_move
-    @moves = @position.gen_legal_moves
+    @moves = @p.gen_legal_moves
     return nil if @moves.size == 0
     @moves[rand(moves.size)]
   end
 
   def depth_first
-    score, move = search_root(-1000, 1000, 3, @position)
-    puts "score: #{score}, best = #{move}"
+    score, move = search_root(-1000, 1000, 2)
+    puts "## end score: #{score}, best = #{move}"
     move
   end
 
-  def search_root(a,b,depth,pos)
+  def search_root(a,b,depth)
     return [] if(depth == 0)
     best = nil
-    pos.gen_legal_moves.each do |m|
-      pos.make(m)
-      score = (pos.side==WHITE ? 1 : -1) * negamax(-b, -a, depth-1, pos)
-      pos.unmake
+    puts "side: #{@p.side==WHITE ? "w":"b"}"
+    @p.gen_moves.each do |m|
+      @p.make(m)
+      score = negamax(-b, -a, depth-1) # (@position.side==WHITE ? 1 : -1) *
+      #puts "move: #{m}"
+      #puts "score: #{score}"
+      #@p.printp
+      @p.unmake
       #return [score, m] if( score >= b )
       if( score > a )
         a     = score
@@ -57,13 +68,13 @@ class Search
     [a, best]
   end
 
-  def negamax(a,b,depth, pos)
-    return eval(pos) if(depth == 0)
-    pos.gen_legal_moves.each do |m|
-      pos.make(m)
-      score = -negamax(-b, -a, depth-1, pos)
-      pos.unmake
-      return b if( score >= b )
+  def negamax(a,b,depth)
+    return (@p.side==WHITE ? -1 : 1)*evaluate() if(depth == 0)
+    @p.gen_moves.each do |m|
+      @p.make(m)
+      score = -negamax(-b, -a, depth-1)
+      @p.unmake
+      #return b if( score >= b )
       a = score if( score > a )
     end
     a

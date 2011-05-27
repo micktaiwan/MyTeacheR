@@ -149,17 +149,17 @@ class Position
 		# mark no-longer-possible castles
 		move.can_castle = @bitboards[CAN_CASTLE] # backup
 		if move.piece == BKING
-			@bitboards[CAN_CASTLE] &= ~(1|2)
-		elsif move.piece == BROOK and move.from == 56
-			@bitboards[CAN_CASTLE] &= ~(1)
-		elsif move.piece == BROOK and move.from == 63
-			@bitboards[CAN_CASTLE] &= ~(2)
-		elsif move.piece == WKING
 			@bitboards[CAN_CASTLE] &= ~(4|8)
-		elsif move.piece == WROOK and move.from == 0
+		elsif move.piece == BROOK and move.from == 56
 			@bitboards[CAN_CASTLE] &= ~(4)
-		elsif move.piece == WROOK and move.from == 7
+		elsif move.piece == BROOK and move.from == 63
 			@bitboards[CAN_CASTLE] &= ~(8)
+		elsif move.piece == WKING
+			@bitboards[CAN_CASTLE] &= ~(1|2)
+		elsif move.piece == WROOK and move.from == 0
+			@bitboards[CAN_CASTLE] &= ~(1)
+		elsif move.piece == WROOK and move.from == 7
+			@bitboards[CAN_CASTLE] &= ~(2)
 		end
 
     if piece_type(move.piece) != PAWN and move.capture == nil
@@ -170,7 +170,7 @@ class Position
     @history << [move, @hclock]
 		mark_enpassant(move.piece, move.from, move.to)
     increment_ply
-    @side = 1-@side
+    change_side
   end
 
   def unmake
@@ -357,6 +357,10 @@ class Position
     end
     update_sum_boards
     @bitboards[CAN_CASTLE] = castle
+	end
+
+	def change_side
+	  @side = 1-@side
 	end
 
 end

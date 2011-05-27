@@ -39,7 +39,7 @@ describe Position, "(all tests)" do
 
   it "should unmake correctly" do
     @p.reset_to_starting_position
-    20.times{@s.play}
+    20.times{@s.play(:random)}
     20.times{@p.unmake}
     @p.all_pieces.should == INIT_POSITION
     @p.hclock.should == 0
