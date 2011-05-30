@@ -43,8 +43,9 @@ class Search
   end
 
   def depth_first
+    t = Time.now
     score, move = search_root(-1000, 1000, 2)
-    puts "## end score: #{score}, best = #{move}"
+    puts "## end score: #{score}, best = #{move}, t = #{Time.now-t}"
     move
   end
 
@@ -75,7 +76,7 @@ class Search
       @p.make(m)
       score = -negamax(-b, -a, depth-1)
       @p.unmake
-      #return b if( score >= b )
+      return b if( score >= b )
       if( score > a )
         a = score
         #puts "d=#{depth}: s=#{score}, b=#{b}"

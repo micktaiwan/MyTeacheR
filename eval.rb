@@ -5,7 +5,9 @@ class Search
   include Constants
 
   def evaluate
-    eval_material + eval_mobility
+    eval_material + eval_position
+
+    #+ eval_mobility
   end
 
   def eval_material
@@ -24,8 +26,14 @@ class Search
 	  white - black
   end
 
+  def eval_position
+    white = @p.indexes(@p.bitboards[WHITE_PAWNS]).inject(0) { |sum, i| WPAWN_TABLE[i] + sum }
+    black = @p.indexes(@p.bitboards[BLACK_PAWNS]).inject(0) { |sum, i| BPAWN_TABLE[i] + sum }
+    white - black
+  end
+
   def eval_mobility
-    (@p.gen_moves(WHITE).size-@p.gen_moves(BLACK).size).to_f / 100
+    (@p.gen_moves(WHITE).size-@p.gen_moves(BLACK).size)
   end
 
 end
