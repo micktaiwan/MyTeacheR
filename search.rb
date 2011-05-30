@@ -52,9 +52,9 @@ class Search
     return [] if(depth == 0)
     best = nil
     puts "side: #{@p.side==WHITE ? "w":"b"}"
-    @p.gen_moves.each do |m|
+    @p.gen_moves.each do |m| # FIXME: gen_legal_moves
       @p.make(m)
-      score = negamax(-b, -a, depth-1) # (@position.side==WHITE ? 1 : -1) *
+      score = -negamax(-b, -a, depth-1) # (@position.side==WHITE ? 1 : -1) *
       #puts "move: #{m}"
       #puts "score: #{score}"
       #@p.printp
@@ -69,13 +69,17 @@ class Search
   end
 
   def negamax(a,b,depth)
-    return (@p.side==WHITE ? -1 : 1)*evaluate() if(depth == 0)
-    @p.gen_moves.each do |m|
+    return (@p.side==WHITE ? 1 : -1)*evaluate() if(depth == 0)
+    #puts "d=#{depth}"
+    @p.gen_moves.each do |m| # FIXME: gen_legal_moves
       @p.make(m)
       score = -negamax(-b, -a, depth-1)
       @p.unmake
       #return b if( score >= b )
-      a = score if( score > a )
+      if( score > a )
+        a = score
+        #puts "d=#{depth}: s=#{score}, b=#{b}"
+      end
     end
     a
   end

@@ -30,12 +30,14 @@ describe Search, "just created" do
     @p.reset_to_starting_position
     @s.eval_material.should == 0
     #@s.eval_mobility.should == 0.2
-    s1, m1 = @s.search_root(-1000, 1000, 3)
+    s1, m1 = @s.search_root(-1000, 1000, 1)
+    puts m1
     @p.change_side
-    s2, m2 = @s.search_root(-1000, 1000, 3)
-    puts s1, s2
+    s2, m2 = @s.search_root(-1000, 1000, 1)
+    puts m2
     s1.should == s2
   end
+
 
 end
 

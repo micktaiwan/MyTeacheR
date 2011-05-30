@@ -207,7 +207,7 @@ class Position
     	@hclock = 0
 		end
     increment_ply(-1)
-		@side = 1-@side
+		change_side
 	end
 
 	def set(piece, *indexes)

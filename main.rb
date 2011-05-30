@@ -32,7 +32,7 @@ class MyTeacher
         puts "#{@p.hply+1}. #{@s.played_move} (nb moves: #{nb_moves}, moy: #{moy}) hclock=#{@p.hclock}"
         @p.printp
         #sleep(0.1)
-        #gets
+        gets
         #print @p.ply.to_s+ " "
         #STDOUT.flush
         break if @p.hply >= 300
