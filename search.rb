@@ -44,7 +44,7 @@ class Search
 
   def depth_first
     t = Time.now
-    score, move = search_root(-1000, 1000, 2)
+    score, move = search_root(-1000, 1000, 3)
     puts "## end score: #{score}, best = #{move}, t = #{Time.now-t}"
     move
   end
