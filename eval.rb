@@ -5,8 +5,7 @@ class Search
   include Constants
 
   def evaluate
-    eval_material +
-    eval_position
+    eval_material + eval_position
     #+ eval_mobility
   end
 
@@ -29,18 +28,18 @@ class Search
   def eval_position
     white = @p.indexes(@p.bitboards[WHITE_PAWNS]).inject(0) { |sum, i| WPAWN_TABLE[i] + sum } +
     @p.indexes(@p.bitboards[WHITE_KNIGHTS]).inject(0) { |sum, i| WKNIGHT_TABLE[i] + sum } +
-    @p.indexes(@p.bitboards[WHITE_BISHOPS]).inject(0) { |sum, i| WKNIGHT_TABLE[i] + sum } +
-    @p.indexes(@p.bitboards[WHITE_ROOKS]).inject(0) { |sum, i| WROOK_TABLE[i] + sum } +
-    @p.indexes(@p.bitboards[WHITE_QUEENS]).inject(0) { |sum, i| WQUEEN_TABLE[i] + sum } +
-    @p.indexes(@p.bitboards[WHITE_KING]).inject(0) { |sum, i| WKING_MG_TABLE[i] + sum }
-    # FIXME: take in to account end game
+    @p.indexes(@p.bitboards[WHITE_BISHOPS]).inject(0) { |sum, i| WBISHOP_TABLE[i] + sum } +
+    @p.indexes(@p.bitboards[WHITE_ROOKS]).inject(0)   { |sum, i| WROOK_TABLE[i] + sum } +
+    @p.indexes(@p.bitboards[WHITE_QUEENS]).inject(0)  { |sum, i| WQUEEN_TABLE[i] + sum } +
+    @p.indexes(@p.bitboards[WHITE_KING]).inject(0)    { |sum, i| WKING_MG_TABLE[i] + sum }
+    # TODO: take in to account end game
 
     black = @p.indexes(@p.bitboards[BLACK_PAWNS]).inject(0) { |sum, i| BPAWN_TABLE[i] + sum } +
     @p.indexes(@p.bitboards[BLACK_KNIGHTS]).inject(0) { |sum, i| BKNIGHT_TABLE[i] + sum } +
-    @p.indexes(@p.bitboards[BLACK_BISHOPS]).inject(0) { |sum, i| BKNIGHT_TABLE[i] + sum } +
-    @p.indexes(@p.bitboards[BLACK_ROOKS]).inject(0) { |sum, i| BROOK_TABLE[i] + sum } +
-    @p.indexes(@p.bitboards[BLACK_QUEENS]).inject(0) { |sum, i| BQUEEN_TABLE[i] + sum } +
-    @p.indexes(@p.bitboards[BLACK_KING]).inject(0) { |sum, i| BKING_MG_TABLE[i] + sum }
+    @p.indexes(@p.bitboards[BLACK_BISHOPS]).inject(0) { |sum, i| BBISHOP_TABLE[i] + sum } +
+    @p.indexes(@p.bitboards[BLACK_ROOKS]).inject(0)   { |sum, i| BROOK_TABLE[i] + sum } +
+    @p.indexes(@p.bitboards[BLACK_QUEENS]).inject(0)  { |sum, i| BQUEEN_TABLE[i] + sum } +
+    @p.indexes(@p.bitboards[BLACK_KING]).inject(0)    { |sum, i| BKING_MG_TABLE[i] + sum }
     white - black
   end
 

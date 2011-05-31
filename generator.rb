@@ -16,7 +16,6 @@ class Position
 		prune_king_revealers(side,gen_moves(side))
 	end
 
-
   # generate pseudo legal moves
   def gen_moves(side=@side)
     gen_knights_moves(side) +
@@ -258,7 +257,7 @@ private
 		moves.select do |m|
 			make(m)
 			next_moves = gen_moves(1-side)
-			king = indexes(@bitboards[kpiece])
+			king = indexes(@bitboards[kpiece])[0]
 			select_ret = true
 			next_moves.each do |m|
 				if m.to == king

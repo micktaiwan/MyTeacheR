@@ -19,6 +19,8 @@ class MyTeacher
       max_moves = 0
       min_moves = 1000
       @p.reset_to_starting_position
+      #puts @p.num_pieces(Constants::WKING)
+      #exit
       loop {
         can_move = @s.play
         break if not can_move

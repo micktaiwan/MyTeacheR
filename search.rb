@@ -9,7 +9,7 @@ class Search
 
   include Constants
 
-  attr_reader :played_move, :position, :moves
+  attr_reader :played_move, :position, :moves, :done
 
   def initialize(position)
     @p    = position
@@ -17,6 +17,7 @@ class Search
   end
 
   def play(type=:depth_first)
+    @done = nil
     @played_move = nil
 
     # type of play depends of the function used
@@ -33,6 +34,7 @@ class Search
     return false if not m
     @p.make(m)
     @played_move = m
+    @done = true
     true
   end
 
@@ -45,17 +47,17 @@ class Search
   def depth_first
     t = Time.now
     score, move = search_root(-1000, 1000, 3)
-    puts "## end score: #{score}, best = #{move}, t = #{Time.now-t}"
+    puts "## end score: #{score.to_f/100}, best = #{move}, t = #{Time.now-t}"
     move
   end
 
   def search_root(a,b,depth)
-    return [] if(depth == 0)
+    return [0,nil] if(depth == 0)
     best = nil
     puts "side: #{@p.side==WHITE ? "w":"b"}"
-    @p.gen_moves.each do |m| # FIXME: gen_legal_moves
+    @p.gen_legal_moves.each do |m| # FIXME: gen_legal_moves
       @p.make(m)
-      score = -negamax(-b, -a, depth-1) # (@position.side==WHITE ? 1 : -1) *
+      score = -negamax(-b, -a, depth-1)
       #puts "move: #{m}"
       #puts "score: #{score}"
       #@p.printp
@@ -64,6 +66,7 @@ class Search
       if( score > a )
         a     = score
         best  = m
+        puts "best so far: #{m}"
       end
     end
     [a, best]
@@ -72,7 +75,7 @@ class Search
   def negamax(a,b,depth)
     return (@p.side==WHITE ? 1 : -1)*evaluate() if(depth == 0)
     #puts "d=#{depth}"
-    @p.gen_moves.each do |m| # FIXME: gen_legal_moves
+    @p.gen_legal_moves.each do |m| # FIXME: gen_legal_moves
       @p.make(m)
       score = -negamax(-b, -a, depth-1)
       @p.unmake

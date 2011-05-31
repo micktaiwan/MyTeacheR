@@ -21,9 +21,9 @@ class Position
       @bitboards[i] = 0
       }
     @all_whites = @all_blacks = @all_pieces = 0
-    @side   = WHITE
-    @ep     = -1
-    @ply = @hclock = 0
+    @side = WHITE
+    @ep   = -1
+    @ply  = @hclock = 0
     @hply = 1
     @history = []
   end
@@ -120,6 +120,16 @@ class Position
   def move_piece(piece, from, to)
 		unset(piece, from)
     set(piece, to)
+  end
+
+  def make_from_input(notation)
+    from = notation[0..1]
+    to   = notation[2..3]
+    m = Move.new
+    m.piece = piece_at(case_to_index(from))
+    m.set(case_to_index(from), case_to_index(to))
+    m.capture = piece_at(case_to_index(to))
+    make(m)
   end
 
   def make(move)

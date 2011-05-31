@@ -38,6 +38,11 @@ describe Search, "just created" do
     s1.should == s2
   end
 
+  it "should not let the king in check" do
+    @p.load_fen("r3kb1r/pp2pppp/2B5/q2p1b2/3P2P1/2N2N1P/RPP2P2/3QK2R b Kkq - 0 7")
+    @s.play
+    puts @s.played_move
+  end
 
 end
 

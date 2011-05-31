@@ -14,6 +14,39 @@ describe Position, "(all tests)" do
 
   it "should be initialized with starting position" do
     @p.all_pieces.should == INIT_POSITION
+    @p.piece_at(0).should == WROOK
+    @p.piece_at(1).should == WKNIGHT
+    @p.piece_at(2).should == WBISHOP
+    @p.piece_at(3).should == WQUEEN
+    @p.piece_at(4).should == WKING
+    @p.piece_at(5).should == WBISHOP
+    @p.piece_at(6).should == WKNIGHT
+    @p.piece_at(7).should == WROOK
+    @p.piece_at(8).should == WPAWN
+    @p.piece_at(9).should == WPAWN
+    @p.piece_at(10).should == WPAWN
+    @p.piece_at(11).should == WPAWN
+    @p.piece_at(12).should == WPAWN
+    @p.piece_at(13).should == WPAWN
+    @p.piece_at(14).should == WPAWN
+    @p.piece_at(15).should == WPAWN
+    (16..47).each { |i| @p.piece_at(i).should == nil }
+    @p.piece_at(63).should == BROOK
+    @p.piece_at(62).should == BKNIGHT
+    @p.piece_at(61).should == BBISHOP
+    @p.piece_at(60).should == BKING
+    @p.piece_at(59).should == BQUEEN
+    @p.piece_at(58).should == BBISHOP
+    @p.piece_at(57).should == BKNIGHT
+    @p.piece_at(56).should == BROOK
+    @p.piece_at(55).should == BPAWN
+    @p.piece_at(54).should == BPAWN
+    @p.piece_at(53).should == BPAWN
+    @p.piece_at(52).should == BPAWN
+    @p.piece_at(51).should == BPAWN
+    @p.piece_at(50).should == BPAWN
+    @p.piece_at(49).should == BPAWN
+    @p.piece_at(48).should == BPAWN
   end
 
   it "should be empty if needed" do
@@ -96,7 +129,6 @@ describe Position, "(all tests)" do
     l.should == init
   end
 
-
   it "should uncastle correctly" do
     @p.load_fen("4k2r/pppppppp/8/8/8/8/8/4K3 b k - 0 1")
     d = @p.dump
@@ -105,6 +137,12 @@ describe Position, "(all tests)" do
     @p.unmake
     @p.should == new_pos
   end
+
+  it "should detect legal moves" do
+    @p.load_fen("r3kb1r/pp2pppp/2B5/q2p1b2/3P2P1/2N2N1P/RPP2P2/3QK2R b Kkq - 0 7")
+    @p.gen_moves.size.should > @p.gen_legal_moves.size
+  end
+
 
 end
 
