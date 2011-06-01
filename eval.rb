@@ -5,8 +5,7 @@ class Search
   include Constants
 
   def evaluate
-    eval_material + eval_position
-    #+ eval_mobility
+    eval_material + eval_position + eval_mobility
   end
 
   def eval_material

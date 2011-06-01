@@ -3,16 +3,16 @@
 class Position
 
 	# generate only legal moves
-	def gen_legal_moves(side=@side)
+	def gen_legal_moves_2(side=@side)
 		moves = gen_moves(side)
 		nb = moves.size
 		moves = prune_king_revealers(side,moves)
-		to_del = moves.size-nb
+		to_del = nb-moves.size
 		puts "pseudo moves: #{nb} - #{to_del} = #{moves.size} legal moves" if to_del > 0
 		moves
 	end
 
-	def gen_legal_moves_2(side=@side)
+	def gen_legal_moves(side=@side)
 		prune_king_revealers(side,gen_moves(side))
 	end
 

@@ -19,6 +19,8 @@ class Search
   def play(type=:depth_first)
     @done = nil
     @played_move = nil
+    @nodes = 0
+    @start_time = Time.now
 
     # type of play depends of the function used
     # random_move, simple
@@ -47,7 +49,7 @@ class Search
   def depth_first
     t = Time.now
     score, move = search_root(-1000, 1000, 3)
-    puts "## end score: #{score.to_f/100}, best = #{move}, t = #{Time.now-t}"
+    puts "## end score: #{score.to_f/100}, best = #{move}, t = #{Time.now-t}, nodes: #{@nodes}, #{@nodes.to_f/(Time.now-@start_time)}"
     move
   end
 
@@ -56,6 +58,7 @@ class Search
     best = nil
     puts "side: #{@p.side==WHITE ? "w":"b"}"
     @p.gen_legal_moves.each do |m| # FIXME: gen_legal_moves
+      @nodes += 1
       @p.make(m)
       score = -negamax(-b, -a, depth-1)
       #puts "move: #{m}"
@@ -66,7 +69,7 @@ class Search
       if( score > a )
         a     = score
         best  = m
-        puts "best so far: #{m}"
+        puts "best so far: #{m}, score: #{a}, nodes: #{@nodes}, #{@nodes.to_f/(Time.now-@start_time)})"
       end
     end
     [a, best]
@@ -76,6 +79,7 @@ class Search
     return (@p.side==WHITE ? 1 : -1)*evaluate() if(depth == 0)
     #puts "d=#{depth}"
     @p.gen_legal_moves.each do |m| # FIXME: gen_legal_moves
+      @nodes += 1
       @p.make(m)
       score = -negamax(-b, -a, depth-1)
       @p.unmake
