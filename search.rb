@@ -10,10 +10,12 @@ class Search
   include Constants
 
   attr_reader :played_move, :position, :done, :stats
+  attr_accessor :debug
 
   def initialize(position)
     @p      = position
     @stats  = Stats.new(@p, self)
+    @debug = nil
   end
 
   def play(type=:depth_first)
@@ -94,6 +96,7 @@ class Search
       @stats.inc_turn_nodes
       @p.make(m)
       score = -negamax(-b, -a, depth-1)
+      puts score
       #puts "move: #{m}"
       #puts "score: #{score}"
       #@p.printp
@@ -102,7 +105,7 @@ class Search
       if( score > a )
         a     = score
         best  = m
-        puts "best so far: #{m}, score: #{a}, nodes: #{@stats.current_turn_nodes}, n per s: #{@stats.nodes_per_second})"
+        puts "best so far: #{m}, score: #{a}, nodes: #{@stats.current_turn_nodes}, n per s: #{@stats.nodes_per_second})" if @debug
       end
     end
     [best, a]
@@ -116,17 +119,14 @@ class Search
     return factor*quiesce(a,b,0) if(depth == 0)
     #return factor*evaluate() if(depth == 0)
     moves = @p.gen_legal_moves
-    return factor*9999999 if moves == []
+    return factor*99999 if moves.size == 0
     moves.each do |m|
       @stats.inc_turn_nodes
       @p.make(m)
       score = -negamax(-b, -a, depth-1)
       @p.unmake
       return b if( score >= b )
-      if( score > a )
-        a = score
-        #puts "d=#{depth}: s=#{score}, b=#{b}"
-      end
+      a = score if( score > a )
     end
     a
   end
@@ -140,7 +140,8 @@ class Search
     #puts "d=#{d}, captures: #{moves.size}, current score=#{stand_pat}"
     moves.each do |m|
       @p.make(m)
-      score = -quiesce( -beta, -alpha, depth+1 )
+      score = -quiesce( -beta, -alpha, depth+1 ) # very bad actually as wwe consider only captures
+                                                 # should do a SEE
       @p.unmake
       return beta if( score >= beta )
       alpha = score if( score > alpha )

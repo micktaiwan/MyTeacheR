@@ -28,7 +28,7 @@ class Stats
     @time_per_turn << Time.now - @start_time
     @score_per_turn << score
     @nodes_per_second << @current_turn_nodes.to_f/@time_per_turn.last
-    puts "## end score: #{score.to_f/100}, best = #{move}, time = #{@time_per_turn.last}, nodes: #{@current_turn_nodes}, n/s: #{round(@current_turn_nodes.to_f/@time_per_turn.last)}"
+    puts "## end score: #{score.to_f/100}, best = #{move}, time = #{@time_per_turn.last}, nodes: #{@current_turn_nodes}, n/s: #{round(@current_turn_nodes.to_f/@time_per_turn.last)}" if @s.debug
   end
 
   def print_end_turn_stats

@@ -30,18 +30,24 @@ describe Search, "just created" do
     @p.reset_to_starting_position
     @s.eval_material.should == 0
     #@s.eval_mobility.should == 0.2
-    s1, m1 = @s.search_root(-1000, 1000, 1)
-    puts m1
+    m1, s1 = @s.search_root(-1000, 1000, 1)
     @p.change_side
-    s2, m2 = @s.search_root(-1000, 1000, 1)
-    puts m2
+    m2, s2 = @s.search_root(-1000, 1000, 1)
     s1.should == s2
   end
 
-  it "should not let the king in check" do
-    @p.load_fen("r3kb1r/pp2pppp/2B5/q2p1b2/3P2P1/2N2N1P/RPP2P2/3QK2R b Kkq - 0 7")
+  #it "should not let the king in check" do
+  #  @p.load_fen("r3kb1r/pp2pppp/2B5/q2p1b2/3P2P1/2N2N1P/RPP2P2/3QK2R b Kkq - 0 7")
+  #  @s.play
+  #  puts @s.played_move
+  #end
+
+  it "should do the last move" do
+    @p.load_fen("2r2k1r/p4ppp/2QBp3/1B1p4/3P4/P3P3/4N1P1/1R4K1 b - - 4 30")
     @s.play
-    puts @s.played_move
+    @s.played_move.to_s.should == "f8g8"
+    @s.play
+    @s.played_move.to_s.should == "c6c8"
   end
 
 end
