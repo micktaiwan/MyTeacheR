@@ -27,6 +27,12 @@ class Move
     @promotion == b.promotion and @can_castle == b.can_castle
   end
 
+  def score
+    return 0 if promotion != nil
+    return 1 if capture != nil
+    return 2
+  end
+
   #def inverse
   #  m             = Move.new
 	#	m.piece       = @piece

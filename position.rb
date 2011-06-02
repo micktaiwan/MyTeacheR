@@ -267,9 +267,23 @@ class Position
 		return nil
 	end
 
+
+  def bitScanForward(bb)
+   raise "empty bb" if (bb == 0)
+   rv = DeBruijn[(((bb & -bb) * DeBruijn64) >> 58) % 64]
+   rv
+  end
+
 	# give indexes of all ones in the bitboard
 	def indexes(bb)
-		(0..63).select {|i| ((1 << i) & bb) != 0}
+		# (0..63).select {|i| ((1 << i) & bb) != 0} # gained 50% of time !
+	  return [] if bb==0
+	  rv = []
+	  begin
+      rv << bitScanForward(bb) # square index from 0..63
+      bb &= bb-1 # reset LS1B
+    end while (bb != 0)
+    rv
 	end
 
 	def can_castle(side, castle_side)
@@ -278,7 +292,16 @@ class Position
 
   # return the number of piece in this position
   def num_pieces(piece)
-    indexes(@bitboards[piece]).size
+    # return indexes(@bitboards[piece]).size # 10% slower
+    b = @bitboards[piece]
+    return 0 if b==0
+    return 1 if ( (b & (b-1)) == 0 ) # assumes b != 0
+    count = 0
+    while (b!=0) do
+      count += 1
+      b &= b - 1 # reset LS1B
+    end
+    count
   end
 
 	# Load Forsyth-Edwards Notation (FEN)

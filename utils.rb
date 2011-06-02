@@ -12,5 +12,12 @@ module MyTeacherUtils
     SQUARENAME.index(c)
   end
 
+  def time_it
+    t = Time.now
+    rv = yield
+    puts Time.now-t
+    rv
+  end
+
 end
 

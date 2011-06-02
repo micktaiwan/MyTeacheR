@@ -3,9 +3,10 @@ require 'constants'
 class Search
 
   include Constants
+  include MyTeacherUtils
 
   def evaluate
-    eval_material + eval_position + eval_mobility
+    eval_material + eval_position + eval_mobility #+ eval_repetition
   end
 
   def eval_material
@@ -25,6 +26,13 @@ class Search
   end
 
   def eval_position
+
+    #last, = @p.history.last
+    #if last.piece == WKNIGHT
+    #  puts last
+    #  puts @p.indexes(@p.bitboards[WHITE_KNIGHTS]).inject(0) { |sum, i| WKNIGHT_TABLE[i] + sum }
+    #end
+
     white = @p.indexes(@p.bitboards[WHITE_PAWNS]).inject(0) { |sum, i| WPAWN_TABLE[i] + sum } +
     @p.indexes(@p.bitboards[WHITE_KNIGHTS]).inject(0) { |sum, i| WKNIGHT_TABLE[i] + sum } +
     @p.indexes(@p.bitboards[WHITE_BISHOPS]).inject(0) { |sum, i| WBISHOP_TABLE[i] + sum } +
@@ -44,6 +52,33 @@ class Search
 
   def eval_mobility
     (@p.gen_moves(WHITE).size-@p.gen_moves(BLACK).size)
+  end
+
+  def eval_repetition
+    return 0 if @p.hply > 8
+    return 0 if @p.history.size < 4
+    last1, = @p.history[-1]
+    last2, = @p.history[-3]
+    if last1.from == last2.to
+      #puts "#{last2} => #{last1}"
+      #gets
+      one = -40
+    else
+      one = 0
+    end
+    #last1, = @p.history[-2]
+    #last2, = @p.history[-4]
+    #if last1.from == last2.to
+    #  two = -40
+    #else
+    #  two = 0
+    #end
+    #if @p.side==WHITE
+    #  return one-two
+    #else
+    #  return two-one
+    #end
+    one
   end
 
 end

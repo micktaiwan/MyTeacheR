@@ -1,30 +1,31 @@
 require 'position'
 require 'eval'
+require 'stats'
 
 class IllegalMoveException < RuntimeError
 end
-
 
 class Search
 
   include Constants
 
-  attr_reader :played_move, :position, :moves, :done
+  attr_reader :played_move, :position, :done, :stats
 
   def initialize(position)
-    @p    = position
-    @moves = []
+    @p      = position
+    @stats  = Stats.new(@p, self)
   end
 
   def play(type=:depth_first)
     @done = nil
     @played_move = nil
-    @nodes = 0
-    @start_time = Time.now
+    @stats.start_turn
 
     # type of play depends of the function used
     # random_move, simple
-    m = case type
+    move, score = case type
+      when :iterative_search
+        iterative_start
       when :depth_first
         depth_first
       when :random
@@ -32,33 +33,65 @@ class Search
       else
         raise "unknown type of play '#{type.to_s}'"
       end
-
-    return false if not m
-    @p.make(m)
-    @played_move = m
+    @stats.end_turn(score, move)
+    return false if not move
+    @p.make(move)
+    @played_move = move
     @done = true
     true
   end
 
   def random_move
-    @moves = @p.gen_legal_moves
-    return nil if @moves.size == 0
-    @moves[rand(moves.size)]
+    @nodes = @p.gen_legal_moves
+    return nil if @nodes.size == 0
+    @nodes[rand(@nodes.size)]
   end
 
   def depth_first
-    t = Time.now
-    score, move = search_root(-1000, 1000, 3)
-    puts "## end score: #{score.to_f/100}, best = #{move}, t = #{Time.now-t}, nodes: #{@nodes}, #{@nodes.to_f/(Time.now-@start_time)}"
-    move
+    search_root(-100000, 100000, 3)
   end
+
+  def iterative_start
+    @moves = [] # store PV
+    do_iterate(0, 1)
+    #puts @moves[0].size
+    puts @moves[0].class
+    @moves[0] # return best move
+  end
+
+  def do_iterate(depth, max_depth)
+    return if depth == max_depth
+    @moves[depth] = Array.new if not @moves[depth]
+    current_level = @moves[depth]
+    current_level = iterative_search(-100000, 100000)
+
+    current_level.each_with_index { |m,index|
+      @p.make(m[0])
+      current_level[index] = iterative_search(-100000, 100000)
+      #puts "#{current_level}, #{current_level[index].size}"
+      @p.unmake
+      }
+    do_iterate(depth+1, max_depth)
+  end
+
+  def iterative_search(a,b)
+    moves = @p.gen_legal_moves.map do |m|
+      @stats.inc_turn_nodes
+      @p.make(m)
+      score = quiesce(a,b,0)
+      @p.unmake
+      [m,score]
+    end
+    moves.sort_by { |m| m[1] }
+  end
+
+
 
   def search_root(a,b,depth)
     return [0,nil] if(depth == 0)
     best = nil
-    puts "side: #{@p.side==WHITE ? "w":"b"}"
-    @p.gen_legal_moves.each do |m| # FIXME: gen_legal_moves
-      @nodes += 1
+    @p.gen_legal_moves.each do |m|
+      @stats.inc_turn_nodes
       @p.make(m)
       score = -negamax(-b, -a, depth-1)
       #puts "move: #{m}"
@@ -69,17 +102,23 @@ class Search
       if( score > a )
         a     = score
         best  = m
-        puts "best so far: #{m}, score: #{a}, nodes: #{@nodes}, #{@nodes.to_f/(Time.now-@start_time)})"
+        puts "best so far: #{m}, score: #{a}, nodes: #{@stats.current_turn_nodes}, n per s: #{@stats.nodes_per_second})"
       end
     end
-    [a, best]
+    [best, a]
+  end
+
+  def factor
+    (@p.side==WHITE ? 1 : -1)
   end
 
   def negamax(a,b,depth)
-    return (@p.side==WHITE ? 1 : -1)*evaluate() if(depth == 0)
-    #puts "d=#{depth}"
-    @p.gen_legal_moves.each do |m| # FIXME: gen_legal_moves
-      @nodes += 1
+    return factor*quiesce(a,b,0) if(depth == 0)
+    #return factor*evaluate() if(depth == 0)
+    moves = @p.gen_legal_moves
+    return factor*9999999 if moves == []
+    moves.each do |m|
+      @stats.inc_turn_nodes
       @p.make(m)
       score = -negamax(-b, -a, depth-1)
       @p.unmake
@@ -92,17 +131,23 @@ class Search
     a
   end
 
+  def quiesce(alpha, beta, depth)
+    stand_pat = evaluate()
+    return beta if( stand_pat >= beta )
+    alpha = stand_pat if(stand_pat > alpha)
+    return alpha if depth >= 3 # FIXME
+    moves = @p.gen_legal_captures
+    #puts "d=#{d}, captures: #{moves.size}, current score=#{stand_pat}"
+    moves.each do |m|
+      @p.make(m)
+      score = -quiesce( -beta, -alpha, depth+1 )
+      @p.unmake
+      return beta if( score >= beta )
+      alpha = score if( score > alpha )
+    end
+    alpha
+  end
+
 end
-=begin
-http://chessprogramming.wikispaces.com/Search
-Search Algorithms
-The majority of chess-programs use some variation of the alpha-beta algorithm
-to search the tree in depth-first manner, with big up to square-root savings for
-the same search result as the pure minimax algorithm. Alpha-beta may be further
-enhanced by PVS similar to Negascout and MTD(f). While move ordering in pure
-minimax search don't cares - since all of branches and nodes are searched
-anyway, it becomes crucial for the performance of alpha beta and enhancements.
-Hans Berliner's chess-program HiTech and Ulf Lorenz's program P.ConNerS used
-best-first approaches quite successfully.
-=end
+
 

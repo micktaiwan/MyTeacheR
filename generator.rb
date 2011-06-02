@@ -18,12 +18,24 @@ class Position
 
   # generate pseudo legal moves
   def gen_moves(side=@side)
-    gen_knights_moves(side) +
-    gen_rooks_moves(side) +
-    gen_bishops_moves(side) +
-    gen_queens_moves(side) +
-    gen_pawns_moves(side) +
-    gen_king_moves(side)
+    m = gen_knights_moves(side) +
+        gen_rooks_moves(side) +
+        gen_bishops_moves(side) +
+        gen_queens_moves(side) +
+        gen_pawns_moves(side) +
+        gen_king_moves(side)
+    m.sort_by { |m| m.score }
+  end
+
+  def gen_legal_captures(side=@side)
+    m = gen_moves(side)
+    m = m.select { |m| m.capture != nil }
+    prune_king_revealers(side,m)
+  end
+
+  def gen_legal_positive_captures(side=@side)
+    #m = gen_legal_captures(side)
+
   end
 
 private
