@@ -25,9 +25,13 @@ class Perft
     @s = Search.new(@p)
   end
 
+# history of s/n
+# 1.  0.00224942242589507
+# 2.  0.00119800730008985
+
   def main
     depth = 3
-    puts "depth is #{depth}. #{0.00224942242589507*Pre_perft[depth]/60} min to go"
+    puts "depth is #{depth}. #{0.00119800730008985*Pre_perft[depth]/60} min to go"
     t = Time.now
     total = perft(Position.new, depth)
     s =  (Time.now - t)
@@ -42,7 +46,7 @@ class Perft
     m = @p.gen_legal_moves # until perf(3) gen_moves is sufficient
     i = m.size
     return total+i if depth == 1
-    puts "depth = #{depth}. #{i} moves" if cur_depth < 4
+    #puts "depth = #{depth}. #{i} moves" if cur_depth < 4
 
     m.each { |m|
       @p.make(m)
