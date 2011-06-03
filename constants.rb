@@ -35,7 +35,8 @@ SYMBOLS = [ 'K','Q','R','N','B','P',
             'k','q','r','n','b','p']
 
 # http://chessprogramming.wikispaces.com/Simplified+evaluation+function
-KING_VALUE, QUEEN_VALUE, ROOK_VALUE, BISHOP_VALUE, KNIGHT_VALUE, PAWN_VALUE = 20000, 900, 500, 330, 320, 100
+VALUES = [20000, 900, 500, 330, 320, 100] # KING, QUEEN, ROOK, KNIGHT, BISHOP, PAWN
+BIG_DELTA = 900 # for delta pruning
 
 BPAWN_TABLE = [
  0,  0,  0,  0,  0,  0,  0,  0,

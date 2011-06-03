@@ -1,6 +1,8 @@
 require 'constants'
 require 'utils'
 require 'move'
+require 'init'
+
 load './generator.rb'
 
 class Position
@@ -12,6 +14,7 @@ class Position
   attr_reader :ply, :hply, :history, :side, :hclock
 
   def initialize
+    init_attacks
 		@bitboards = Array.new(LAST_BOARD_INDEX+1, 0)
     reset_to_starting_position
   end
@@ -134,7 +137,22 @@ class Position
 
   def make(move)
     raise "no move" if move.from==nil or move.to==nil
-	  unset(move.capture, move.to) if move.capture
+	  # unset(move.capture, move.to) if move.capture # useless
+
+	  # detect captures even if not set (it is the case with xboard moves)
+	  if not move.capture
+      if piece_type(move.piece) == PAWN
+        target = indexes(@bitboards[ENPASSANT])[0]
+        if @bitboards[ENPASSANT] != 0 and move.to == target
+          move.capture = (color(move.piece)==WHITE ? BPAWN : WPAWN)
+          unset(move.capture, target + (color(move.piece)==WHITE ? -8 : 8))
+        end
+      else
+	      p = piece_at(move.to)
+	      move.capture = p if p # and color(p) != color(move.piece) # assumed
+	    end
+	  end
+
 		unset(move.piece, move.from)
 		if !move.promotion
 		  set(move.piece, move.to)
@@ -191,7 +209,7 @@ class Position
 		else unset(move.piece, move.to) end
 		set(move.piece, move.from)
 
-		set(move.capture, move.to) if(move.capture)
+		set(move.capture, move.to) if(move.capture) # FIXME: not right if capture was enpassant
 
 		# handle castling
 		@bitboards[CAN_CASTLE] = move.can_castle
@@ -236,20 +254,16 @@ class Position
     update_sum_boards
 	end
 
+  # TODO: do some tests !!!!
 	def mark_enpassant(last_piece, last_orig, last_dest)
 		if last_piece == BPAWN and last_orig > 47 and last_orig < 56 and
-			@bitboards[ENPASSANT] = ( 1 << last_orig+8)
+			@bitboards[ENPASSANT] = ( 1 << last_orig-8) # edited the +8 to -8
 		elsif last_piece == WPAWN and last_orig > 7 and last_orig < 16 and
 			@bitboards[ENPASSANT] = ( 1 << last_orig+8)
 		else
 			@bitboards[ENPASSANT] = 0
 		end
 	end
-
-  def piece_type(piece)
-    return piece if piece < BLACKS_OFFSET
-    piece - BLACKS_OFFSET
-  end
 
 	def piece_at(index)
 		bit = (1 << index)
@@ -395,6 +409,14 @@ class Position
 	def change_side
 	  @side = 1-@side
 	end
+
+  def get_smallest_attacker(square, side)
+    moves = gen_legal_moves(side) # I've chosen a simple method :)
+    moves = moves.select { |m| m.to == square }
+    return [nil, nil] if moves.size == 0
+    moves.sort_by { |m| piece_value(m.piece) }
+    [moves[0].piece, moves[0].from]
+  end
 
 end
 

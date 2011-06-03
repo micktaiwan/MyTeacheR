@@ -1,7 +1,7 @@
 require 'search'
 include Constants
 
-describe Search, "just created" do
+describe Search, "" do
 
   before(:all) do
     @p = Position.new
@@ -30,9 +30,10 @@ describe Search, "just created" do
     @p.reset_to_starting_position
     @s.eval_material.should == 0
     #@s.eval_mobility.should == 0.2
-    m1, s1 = @s.search_root(-1000, 1000, 1)
     @p.change_side
-    m2, s2 = @s.search_root(-1000, 1000, 1)
+    m1, s1 = @s.search_root(-10000, 10000, 1)
+    @p.change_side
+    m2, s2 = @s.search_root(-10000, 10000, 1)
     s1.should == s2
   end
 

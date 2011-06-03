@@ -87,8 +87,6 @@ class Search
     moves.sort_by { |m| m[1] }
   end
 
-
-
   def search_root(a,b,depth)
     return [0,nil] if(depth == 0)
     best = nil
@@ -96,7 +94,6 @@ class Search
       @stats.inc_turn_nodes
       @p.make(m)
       score = -negamax(-b, -a, depth-1)
-      puts score
       #puts "move: #{m}"
       #puts "score: #{score}"
       #@p.printp
@@ -116,7 +113,7 @@ class Search
   end
 
   def negamax(a,b,depth)
-    return factor*quiesce(a,b,0) if(depth == 0)
+    return quiesce(a,b,0) if(depth == 0)
     #return factor*evaluate() if(depth == 0)
     moves = @p.gen_legal_moves
     return factor*99999 if moves.size == 0
@@ -132,23 +129,54 @@ class Search
   end
 
   def quiesce(alpha, beta, depth)
-    stand_pat = evaluate()
+    stand_pat = factor*evaluate()
     return beta if( stand_pat >= beta )
+
+    #BIG_DELTA = piece_value(QUEEN)
+    #if ( isPromotingPawn() ) BIG_DELTA += 775;
+
+    return alpha if(stand_pat < alpha - BIG_DELTA) # delta pruning
+
     alpha = stand_pat if(stand_pat > alpha)
     return alpha if depth >= 3 # FIXME
+
     moves = @p.gen_legal_captures
-    #puts "d=#{d}, captures: #{moves.size}, current score=#{stand_pat}"
+    #puts "d=#{depth}, captures: #{moves.size}, current score=#{alpha}"
+
+    #moves = moves.map { |m| [m,see_root(m)] }
+    #moves = moves.select { |m| m[1] > 0 }
+    #moves = moves.sort_by { |m| -m[1] }
+    #moves = moves.map { |m| m[0] }
+
     moves.each do |m|
       @p.make(m)
-      score = -quiesce( -beta, -alpha, depth+1 ) # very bad actually as wwe consider only captures
-                                                 # should do a SEE
+      score = -quiesce( -beta, -alpha, depth+1 )
       @p.unmake
+
       return beta if( score >= beta )
       alpha = score if( score > alpha )
     end
     alpha
   end
 
-end
+  # Static Exchange Evaluation from a Move
+  def see_root(capture_move)
+    @p.make(capture_move)
+    value = piece_value(capture_move.piece) - see(capture_move.to)
+    @p.unmake
+    return value
+  end
 
+  # generic Static Exchange Evaluation
+  def see(square)
+    piece, from_square = @p.get_smallest_attacker(square, @p.side)
+    return 0 if not piece
+    move = Move.new(piece, from_square, square, @p.piece_at(square))
+    @p.make(move)
+    value = piece_value(piece) - see(square)
+    @p.unmake
+    return value
+  end
+
+end
 

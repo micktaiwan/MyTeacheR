@@ -129,6 +129,14 @@ describe Position, "(all tests)" do
     l.should == init
   end
 
+  it "should do en passant correctly" do
+    @p.load_fen("1r3rk1/2pn3p/p2qp3/3p1pPQ/3P4/2P1P3/P1B3P1/R1B2K2 w - f6 0 25")
+    @p.make(Move.new(WPAWN, G5, F6))
+    @p.piece_at(F5).should == nil
+    @p.history.last[0].capture.should == BPAWN
+    # TODO: more tests !!!! specially with unmake
+  end
+
   it "should uncastle correctly" do
     @p.load_fen("4k2r/pppppppp/8/8/8/8/8/4K3 b k - 0 1")
     d = @p.dump
@@ -142,7 +150,6 @@ describe Position, "(all tests)" do
     @p.load_fen("r3kb1r/pp2pppp/2B5/q2p1b2/3P2P1/2N2N1P/RPP2P2/3QK2R b Kkq - 0 7")
     @p.gen_moves.size.should > @p.gen_legal_moves.size
   end
-
 
 end
 

@@ -10,29 +10,22 @@ class Search
   end
 
   def eval_material
-	  white = PAWN_VALUE    * @p.num_pieces(WPAWN) +
-        		QUEEN_VALUE   * @p.num_pieces(WQUEEN) +
-        		ROOK_VALUE    * @p.num_pieces(WROOK) +
-        		BISHOP_VALUE  * @p.num_pieces(WBISHOP) +
-        		KNIGHT_VALUE  * @p.num_pieces(WKNIGHT) +
-        		KING_VALUE    * @p.num_pieces(WKING)
-	  black = PAWN_VALUE    * @p.num_pieces(BPAWN) +
-        		QUEEN_VALUE   * @p.num_pieces(BQUEEN) +
-        		ROOK_VALUE    * @p.num_pieces(BROOK) +
-        		BISHOP_VALUE  * @p.num_pieces(BBISHOP) +
-        		KNIGHT_VALUE  * @p.num_pieces(BKNIGHT) +
-        		KING_VALUE    * @p.num_pieces(BKING)
+	  white = piece_value(PAWN)    * @p.num_pieces(WPAWN) +
+        		piece_value(QUEEN)   * @p.num_pieces(WQUEEN) +
+        		piece_value(ROOK)    * @p.num_pieces(WROOK) +
+        		piece_value(BISHOP)  * @p.num_pieces(WBISHOP) +
+        		piece_value(KNIGHT)  * @p.num_pieces(WKNIGHT) +
+        		piece_value(KING)    * @p.num_pieces(WKING)
+	  black = piece_value(PAWN)    * @p.num_pieces(BPAWN) +
+        		piece_value(QUEEN)   * @p.num_pieces(BQUEEN) +
+        		piece_value(ROOK)    * @p.num_pieces(BROOK) +
+        		piece_value(BISHOP)  * @p.num_pieces(BBISHOP) +
+        		piece_value(KNIGHT)  * @p.num_pieces(BKNIGHT) +
+        		piece_value(KING)    * @p.num_pieces(BKING)
 	  white - black
   end
 
   def eval_position
-
-    #last, = @p.history.last
-    #if last.piece == WKNIGHT
-    #  puts last
-    #  puts @p.indexes(@p.bitboards[WHITE_KNIGHTS]).inject(0) { |sum, i| WKNIGHT_TABLE[i] + sum }
-    #end
-
     white = @p.indexes(@p.bitboards[WHITE_PAWNS]).inject(0) { |sum, i| WPAWN_TABLE[i] + sum } +
     @p.indexes(@p.bitboards[WHITE_KNIGHTS]).inject(0) { |sum, i| WKNIGHT_TABLE[i] + sum } +
     @p.indexes(@p.bitboards[WHITE_BISHOPS]).inject(0) { |sum, i| WBISHOP_TABLE[i] + sum } +

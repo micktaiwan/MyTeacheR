@@ -33,33 +33,16 @@ class Position
     prune_king_revealers(side,m)
   end
 
-  def gen_legal_positive_captures(side=@side)
-    #m = gen_legal_captures(side)
-
-  end
-
 private
-
-  def colored_piece(piece, side)
-    piece + (side == BLACK ? BLACKS_OFFSET : 0)
-  end
-
-  def color(piece)
-    return WHITE if piece <= PAWN
-    return BLACK
-  end
 
   def gen_knights_moves(side)
     moves = []
     knights = @bitboards[colored_piece(KNIGHT,side)]
     indexes(knights).each { |i|
-      [-17, -15, -10, -6, 6, 10, 15, 17].each do |m|
-        target = i+m
-        if target >= 0 and target <= 63 and ((target % 8) - (i % 8)).abs < 3
-          capture = piece_at(target)
-          moves << Move.new(colored_piece(KNIGHT,side), i, target, capture) if !capture or side!=color(capture)
-        end
-      end
+      indexes(@knight_attacks[i] & ~@all_whites).each { |target|
+        capture = piece_at(target)
+        moves << Move.new(colored_piece(KNIGHT,side), i, target, capture) if !capture or side!=color(capture)
+        }
       }
     moves
   end
