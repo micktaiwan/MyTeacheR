@@ -44,9 +44,9 @@ module MyTeacherUtils
   def pretty_time(secs)
     return "#{round(secs)}s" if secs < 60
     min = (secs.to_f / 60).floor
-    return "#{min}m #{round(secs-min*60)}s" if min < 60
+    return "#{min}m#{round(secs-min*60,1)}" if min < 60
     hour = (min.to_f / 60).floor
-    "#{hour}h#{min-hour*60}:#{round(secs-min*60,1)}s"
+    "#{hour}h#{min-hour*60}m#{round(secs-min*60,1)}"
   end
 
   def round(n, f=0.1)

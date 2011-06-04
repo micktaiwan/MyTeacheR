@@ -41,13 +41,13 @@ class Stats
 
   def print_verbose_stats
     puts "moves per turn:"
-    puts pretty_array(@nb_moves_per_turn)
+    puts pretty_array(@nb_moves_per_turn, :round)
     puts "time per turn:"
-    puts pretty_array(@time_per_turn)
+    puts pretty_array(@time_per_turn, :pretty_time)
     puts "n/s per turn:"
-    puts pretty_array(@nodes_per_second)
+    puts pretty_array(@nodes_per_second, :round)
     puts "score per turn:"
-    puts pretty_array(@score_per_turn)
+    puts pretty_array(@score_per_turn, :round)
   end
 
   def nodes_per_second
@@ -56,9 +56,9 @@ class Stats
 
 private
 
-  def pretty_array(a)
+  def pretty_array(a, proc)
     rv = []
-    a.each_with_index { |item, index| rv << "  #{index+1}. #{round(item)} (#{@p.history[index][0]})" }
+    a.each_with_index { |item, index| rv << "  #{index+1}. #{method(proc).call(item)} (#{@p.history[index][0]})" }
     rv.join("\n")
   end
 

@@ -10,7 +10,7 @@ class Position
   include Constants
   include MyTeacherUtils
 
-  attr_reader :all_pieces, :bitboards
+  attr_reader :all_pieces, :all_whites, :all_blacks, :bitboards
   attr_reader :ply, :hply, :history, :side, :hclock
 
   def initialize
@@ -83,12 +83,16 @@ class Position
 	end
 
 	def ==(pos)
-	  @all_pieces == pos.all_pieces and
-		@history == pos.history and
-		@side == pos.side and
-		@hply == pos.hply and
-		@ply == pos.ply and
-		@hclock == pos.hclock
+	  rv = true
+	  (0..LAST_BOARD_INDEX).each { |i|
+	    rv = rv and @bitboards[i] == pos.bitboards[i]
+	    }
+	  rv and
+		@history    == pos.history and
+		@side       == pos.side and
+		@hply       == pos.hply and
+		@ply        == pos.ply and
+		@hclock     == pos.hclock
 	end
 
   def moves_string(moves)
@@ -203,7 +207,7 @@ class Position
 
   def unmake
 		move, = @history.pop
-		return unless move
+		raise "unmake but no move in history" unless move
 
 		if(move.promotion) then unset(move.promotion, move.to)
 		else unset(move.piece, move.to) end
@@ -297,7 +301,6 @@ class Position
 		end
 		return nil
 	end
-
 
   def bitScanForward(bb)
    raise "empty bb" if (bb == 0)
@@ -412,8 +415,8 @@ class Position
     	  @hclock = str[i,2].scan(/\d+/)[0].to_i
         i += @hclock.to_s.size
     	when :ply
-    	  @ply = str[i,3].scan(/\d+/)[0].to_i
-    	  @hply = ((@ply-1) * 2) + ((@side == BLACK)? 1 : 0)
+    	  @hply = str[i,3].scan(/\d+/)[0].to_i
+    	  @ply = ((@hply-1) * 2) + ((@side == BLACK)? 1 : 0)
     	  break
     	else
         raise "can not read this FEN position #{str}"
@@ -421,6 +424,7 @@ class Position
     end
     update_sum_boards
     @bitboards[CAN_CASTLE] = castle
+    self
 	end
 
 	def change_side

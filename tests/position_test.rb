@@ -75,7 +75,7 @@ describe Position, "(all tests)" do
     @p.all_pieces.should == INIT_POSITION
     @p.hclock.should == 0
     # another unnessassary unmake
-    lambda { @p.unmake }.should_not raise_error
+    lambda { @p.unmake }.should raise_error
   end
 
   it "should load fen correctly" do
@@ -85,8 +85,8 @@ describe Position, "(all tests)" do
     @p.bitboards[CAN_CASTLE].should == 15
     @p.side.should == BLACK
     @p.hclock.should == 1
-    @p.ply.should == 2
-    @p.hply.should == 3
+    @p.hply.should == 2
+    @p.ply.should == 3
 
     @p.load_fen("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b Qkq e3 1 2")
     @p.bitboards[CAN_CASTLE].should == 13
@@ -121,18 +121,31 @@ describe Position, "(all tests)" do
 
   it "should dump correctly" do
     init  = Position.new
-    l     =  Position.new
+    l     = Position.new
     l.load(init.dump)
     l.all_pieces.should == INIT_POSITION
     l.should == init
   end
 
+  it "should compare correctly" do
+    p1  = Position.new
+    p2  = Position.new
+    p1.should == p2
+    p1.make(Move.new(WPAWN, D2, D3))
+    p1.should_not == p2
+  end
+
   it "should do en passant correctly" do
-    @p.load_fen("1r3rk1/2pn3p/p2qp3/3p1pPQ/3P4/2P1P3/P1B3P1/R1B2K2 w - f6 0 25")
+    fen = "1r3rk1/2pn3p/p2qp3/3p1pPQ/3P4/2P1P3/P1B3P1/R1B2K2 w - f6 0 25"
+    @p.load_fen(fen)
+    @p.piece_at(F5).should == BPAWN
     @p.make(Move.new(WPAWN, G5, F6))
     @p.piece_at(F5).should == nil
     @p.history.last[0].capture.should == BPAWN
     # TODO: more tests !!!! specially with unmake
+    @p.unmake
+    @p.piece_at(F5).should == BPAWN
+    @p.==(Position.new.load_fen(fen)).should eq true
   end
 
   it "should uncastle correctly" do
