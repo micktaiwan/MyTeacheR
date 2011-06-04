@@ -142,7 +142,6 @@ describe Position, "(all tests)" do
     @p.make(Move.new(WPAWN, G5, F6))
     @p.piece_at(F5).should == nil
     @p.history.last[0].capture.should == BPAWN
-    # TODO: more tests !!!! specially with unmake
     @p.unmake
     @p.piece_at(F5).should == BPAWN
     @p.==(Position.new.load_fen(fen)).should eq true

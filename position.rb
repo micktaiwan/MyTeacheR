@@ -146,8 +146,10 @@ class Position
       unset_capture(move)
 	  else # detect captures even if not set (it is the case with xboard moves)
       if piece_type(move.piece) == PAWN and (target = enpassant_capture_target(move))
-        move.capture = (color(move.piece)==WHITE ? BPAWN : WPAWN) # we found it
-        unset(move.capture, target + (color(move.piece)==WHITE ? -8 : 8))
+        move.capture = colored_piece(move.piece, 1-color(move.piece)) # we found it
+        pawn_case = target + (color(move.piece)==WHITE ? -8 : 8)
+        unset(move.capture, pawn_case)
+        move.enpassant = pawn_case
       else
 	      p = piece_at(move.to)
 	      if p # and color(p) != color(move.piece) # assumed
@@ -200,7 +202,7 @@ class Position
       @hclock = 0
     end
     @history << [move, @hclock]
-		mark_enpassant(move.piece, move.from, move.to)
+		mark_enpassant(move)
     increment_ply
     change_side
   end
@@ -213,7 +215,13 @@ class Position
 		else unset(move.piece, move.to) end
 		set(move.piece, move.from)
 
-		set(move.capture, move.to) if(move.capture) # FIXME: not right if capture was enpassant
+    if(move.capture)
+      if move.enpassant
+	      set(move.capture, move.enpassant)
+      else
+	      set(move.capture, move.to)
+	    end
+		end
 
 		# handle castling
 		@bitboards[CAN_CASTLE] = move.can_castle
@@ -232,10 +240,10 @@ class Position
 		end
 
 		if last = @history.last
-			mark_enpassant(last[0].piece, last[0].from, last[0].to)
+			mark_enpassant(last[0])
     	@hclock = last[1]
 		else
-			mark_enpassant(nil, nil, nil)
+			mark_enpassant(nil)
     	@hclock = 0
 		end
     increment_ply(-1)
@@ -269,18 +277,24 @@ class Position
   def unset_capture(move)
     raise "not a capture" if !move.capture
     if (target = enpassant_capture_target(move))
-      unset(move.capture, target + (color(move.piece)==WHITE ? -8 : 8))
-      return
+      pawn_case = target + (color(move.piece)==WHITE ? -8 : 8)
+      unset(move.capture, pawn_case)
+ 			move.enpassant = pawn_case
+    else
+      unset(move.capture, move.to)
     end
-    unset(move.capture, move.to)
   end
 
   # TODO: do some tests !!!!
-	def mark_enpassant(last_piece, last_orig, last_dest)
-		if last_piece == BPAWN and last_orig > 47 and last_orig < 56 and
-			@bitboards[ENPASSANT] = ( 1 << last_orig+8) # I find that strange but if -8 then Perft(3) = 8904....
-		elsif last_piece == WPAWN and last_orig > 7 and last_orig < 16 and
-			@bitboards[ENPASSANT] = ( 1 << last_orig+8)
+	def mark_enpassant(move)
+	  if !move
+			@bitboards[ENPASSANT] = 0
+	    return
+	  end
+		if move.piece == BPAWN and move.from > 47 and move.from < 56
+			@bitboards[ENPASSANT] = ( 1 << move.from+8) # I find that strange but if -8 then Perft(3) = 8904....
+		elsif move.piece == WPAWN and move.from > 7 and move.from < 16
+			@bitboards[ENPASSANT] = ( 1 << move.from+8)
 		else
 			@bitboards[ENPASSANT] = 0
 		end

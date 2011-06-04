@@ -11,13 +11,21 @@ include MyTeacherUtils
 
 p = Position.new
 s = Search.new(p)
-p.load_fen("r2qkb1r/2p1pppp/p1n2n2/1p1p1b2/3P4/1BN1PN2/PPP2PPP/R1BQK2R b KQkq - 3 7")
+#p.load_fen("r2qkb1r/2p1pppp/p1n2n2/1p1p1b2/3P4/1BN1PN2/PPP2PPP/R1BQK2R b KQkq - 3 7")
+#p.printp
+#start = Time.now()
+#s.play
+#puts pretty_time(Time.now()-start)
+#p.printp
+# TODO: score last move score
+
+
+p.load_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1")
 p.printp
 start = Time.now()
 s.play
 puts pretty_time(Time.now()-start)
 p.printp
-# TODO: score last move score
 
 
 # test 1

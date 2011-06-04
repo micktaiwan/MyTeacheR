@@ -3,15 +3,16 @@ require 'constants'
 class Move
   include Constants
 
-	attr_accessor :piece, :from, :to, :capture, :promotion, :can_castle
+	attr_accessor :piece, :from, :to, :capture, :promotion, :can_castle, :enpassant
 
-  def initialize(piece=nil, from=nil, to=nil, capture=nil, promotion=nil, can_castle=nil)
+  def initialize(piece=nil, from=nil, to=nil, capture=nil, promotion=nil, can_castle=nil, enpassant=nil)
 		@piece      = piece # WKING to BPAWN
     @from       = from
     @to         = to
 		@capture    = capture # WKING to BPAWN
 		@promotion  = promotion # WQUEEN..WBISHOP AND BQUEEN..BBISHOP
 		@can_castle = can_castle
+		@enpassant  = enpassant
   end
 
   def set(from, to)

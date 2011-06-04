@@ -3,16 +3,20 @@ TODO list
 
 Each task is sorted by importance/priority (or ROI if you want), one relative to another
 
+4 June 2011:
+The engine is almost done.
+It remains to do the fifty moves rule, repetition rule and a lot of optimisation !
+
 Done        - Set up TDD (RSpec) 19-May
 Done        - choose a board representation => bitboards 19-May => 20-May
 Done        - write functions to update chessboard representation
 Done        - write utility function to translate FEN position into your chessboard representation (if not, no easy TDD for move generator) 25-May
 Done        - write moves generator 21-May => 25-May
 Done        - write a Perft function 25-May
-            - write a search function with simple evaluation function
-            - xboard interface
-            - play !
-            - optimisation (Quiescence search, etc...)
+Done        - write a search function with simple evaluation function (end of may)
+Done        - xboard interface (end of may)
+Done !      - play !
+In progress - optimisation: Quiescence search (done), etc...
             - play !
             - FICS interface
             - play !
