@@ -5,15 +5,13 @@ include Constants
 
 describe Position, "(all tests)" do
 
-  INIT_POSITION = 18446462598732906495
-
   before(:all) do
     @p = Position.new
     @s = Search.new(@p)
   end
 
   it "should be initialized with starting position" do
-    @p.all_pieces.should == INIT_POSITION
+    @p.all_pieces.should  == INIT_POSITION
     @p.piece_at(0).should == WROOK
     @p.piece_at(1).should == WKNIGHT
     @p.piece_at(2).should == WBISHOP

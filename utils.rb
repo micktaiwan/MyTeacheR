@@ -37,8 +37,20 @@ module MyTeacherUtils
   end
 
   def color(piece)
-    return WHITE if piece <= PAWN
+    return WHITE if piece <= WPAWN
     return BLACK
+  end
+
+  def pretty_time(secs)
+    return "#{round(secs)}s" if secs < 60
+    min = (secs.to_f / 60).floor
+    return "#{min}m #{round(secs-min*60)}s" if min < 60
+    hour = (min.to_f / 60).floor
+    "#{hour}h#{min-hour*60}:#{round(secs-min*60,1)}s"
+  end
+
+  def round(n, f=0.1)
+    (n / f).round * f
   end
 
   def time_it

@@ -91,7 +91,7 @@ class Position
 		@hclock == pos.hclock
 	end
 
-  def print_moves(moves)
+  def moves_string(moves)
     moves.map { |m| "#{SQUARENAME[m.from]}#{SQUARENAME[m.to]}" }.join(", ")
   end
 
@@ -136,20 +136,20 @@ class Position
   end
 
   def make(move)
-    raise "no move" if move.from==nil or move.to==nil
-	  # unset(move.capture, move.to) if move.capture # useless
+    raise "no move" if move.piece==nil or move.from==nil or move.to==nil
 
-	  # detect captures even if not set (it is the case with xboard moves)
-	  if not move.capture
-      if piece_type(move.piece) == PAWN
-        target = indexes(@bitboards[ENPASSANT])[0]
-        if @bitboards[ENPASSANT] != 0 and move.to == target
-          move.capture = (color(move.piece)==WHITE ? BPAWN : WPAWN)
-          unset(move.capture, target + (color(move.piece)==WHITE ? -8 : 8))
-        end
+    if move.capture
+      unset_capture(move)
+	  else # detect captures even if not set (it is the case with xboard moves)
+      if piece_type(move.piece) == PAWN and (target = enpassant_capture_target(move))
+        move.capture = (color(move.piece)==WHITE ? BPAWN : WPAWN) # we found it
+        unset(move.capture, target + (color(move.piece)==WHITE ? -8 : 8))
       else
 	      p = piece_at(move.to)
-	      move.capture = p if p # and color(p) != color(move.piece) # assumed
+	      if p # and color(p) != color(move.piece) # assumed
+  	      move.capture = p # we found it
+      	  unset(move.capture, move.to)
+      	end
 	    end
 	  end
 
@@ -253,6 +253,23 @@ class Position
 		end
     update_sum_boards
 	end
+
+  def enpassant_capture_target(move)
+    return nil if @bitboards[ENPASSANT] == 0
+    target = indexes(@bitboards[ENPASSANT])[0]
+    return target if move.to == target
+    return nil
+  end
+
+  # takes care of en passant captures
+  def unset_capture(move)
+    raise "not a capture" if !move.capture
+    if (target = enpassant_capture_target(move))
+      unset(move.capture, target + (color(move.piece)==WHITE ? -8 : 8))
+      return
+    end
+    unset(move.capture, move.to)
+  end
 
   # TODO: do some tests !!!!
 	def mark_enpassant(last_piece, last_orig, last_dest)

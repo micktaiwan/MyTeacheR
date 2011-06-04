@@ -1,3 +1,5 @@
+require 'utils'
+
 class Stats
 
   attr_reader :current_turn_nodes
@@ -51,10 +53,6 @@ class Stats
   end
 
 private
-
-  def round(n)
-    (n / 0.1).round * 0.1
-  end
 
   def pretty_array(a)
     rv = []

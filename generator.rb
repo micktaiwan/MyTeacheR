@@ -33,16 +33,18 @@ class Position
     prune_king_revealers(side,m)
   end
 
-private
+# private
 
   def gen_knights_moves(side)
     moves = []
-    knights = @bitboards[colored_piece(KNIGHT,side)]
-    indexes(knights).each { |i|
-      indexes(@knight_attacks[i] & ~@all_whites).each { |target|
-        capture = piece_at(target)
-        moves << Move.new(colored_piece(KNIGHT,side), i, target, capture) if !capture or side!=color(capture)
-        }
+    indexes(@bitboards[colored_piece(KNIGHT,side)]).each { |i|
+      [-17, -15, -10, -6, 6, 10, 15, 17].each do |m|
+        target = i+m
+        if target >= 0 and target <= 63 and ((target % 8) - (i % 8)).abs < 3
+          capture = piece_at(target)
+          moves << Move.new(colored_piece(KNIGHT,side), i, target, capture) if !capture or side!=color(capture)
+        end
+      end
       }
     moves
   end
@@ -76,7 +78,7 @@ private
     moves = []
     rooks = @bitboards[colored_piece(ROOK,side)]
     indexes(rooks).each do |r|
-      moves += gen_rook_type_moves(@side, r, ROOK)
+      moves += gen_rook_type_moves(side, r, ROOK)
     end
     moves
   end
@@ -194,7 +196,7 @@ private
 				  end
 				end
 			end
-			#check en-passant
+			# generate en-passant
 			if @bitboards[ENPASSANT] != 0
 				passant = indexes(@bitboards[ENPASSANT]).first
 				if (p + attack_right) == passant or (p + attack_left) == passant

@@ -7,6 +7,8 @@ require 'search'
 
 class Perft
 
+  include MyTeacherUtils
+
   Pre_perft = {
   1=>20,
   2=>400,
@@ -27,16 +29,17 @@ class Perft
 
 # history of s/n
 # 1.  0.00224942242589507
-# 2.  0.00119800730008985
+# 2.  0.00118620580087328
 
   def main
     depth = 3
-    puts "depth is #{depth}. #{0.00119800730008985*Pre_perft[depth]/60} min to go"
+    pt = pretty_time(0.0012*Pre_perft[depth])
+    puts "depth is #{depth}\n#{pt} to go"
     t = Time.now
     total = perft(Position.new, depth)
     s =  (Time.now - t)
-    puts "#{total} moves in #{s} secs"
-    puts "#{s/total} per move"
+    puts "#{total} moves in #{pretty_time(s)}"
+    puts "#{s/total} second per move"
   end
 
   # return the number of move per ply
@@ -60,7 +63,7 @@ class Perft
   def performance_run
     t = Time.now
     i = 0
-    100.times {
+    10.times {
       rv = @s.play
       break if not rv
       i += 1
