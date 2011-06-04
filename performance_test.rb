@@ -1,6 +1,9 @@
 # I found a position that takes a long time to find the next move at detph 3
 # 12 min and 17.6 seconds
 
+# 4-June: with quiece max depth = 3: 14m 4.3s
+
+
 require 'search'
 require 'constants'
 include Constants
@@ -14,6 +17,7 @@ start = Time.now()
 s.play
 puts pretty_time(Time.now()-start)
 p.printp
+# TODO: score last move score
 
 
 # test 1

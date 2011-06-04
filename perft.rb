@@ -40,6 +40,7 @@ class Perft
     s =  (Time.now - t)
     puts "#{total} moves in #{pretty_time(s)}"
     puts "#{s/total} second per move"
+    total
   end
 
   # return the number of move per ply
@@ -76,5 +77,6 @@ class Perft
 
 end
 
-Perft.new.main
+total = Perft.new.main
+exit (total == Pre_perft[3] ? "0" : "1")
 
