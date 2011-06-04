@@ -2,6 +2,8 @@ require 'utils'
 
 class Stats
 
+  include MyTeacherUtils
+
   attr_reader :current_turn_nodes
 
   def initialize(p,s)

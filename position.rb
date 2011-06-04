@@ -274,7 +274,7 @@ class Position
   # TODO: do some tests !!!!
 	def mark_enpassant(last_piece, last_orig, last_dest)
 		if last_piece == BPAWN and last_orig > 47 and last_orig < 56 and
-			@bitboards[ENPASSANT] = ( 1 << last_orig-8) # edited the +8 to -8
+			@bitboards[ENPASSANT] = ( 1 << last_orig+8) # I find that strange but if -8 then Perft(3) = 8904....
 		elsif last_piece == WPAWN and last_orig > 7 and last_orig < 16 and
 			@bitboards[ENPASSANT] = ( 1 << last_orig+8)
 		else
