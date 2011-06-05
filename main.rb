@@ -117,6 +117,7 @@ class MyTeacher
       loop do
         line = f.readline
         break unless line
+        next if line[0].chr == '#'
         arr = line.split(";")
         print '.'
         STDOUT.flush
