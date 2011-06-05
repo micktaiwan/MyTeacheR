@@ -48,7 +48,9 @@ class MyTeacher
       when input=="show"
         @p.printp
       when input=="moves"
-        puts @p.gen_legal_moves.join(",")
+        @p.gen_legal_moves.sort_by {|m| m.to_s}.each { |m|
+          puts "#{m.to_s}: #{m.inspect}"
+          }
       when input=="solo"
         solo
       when input[0..3]=="test"
@@ -100,7 +102,7 @@ class MyTeacher
   end
 
   def divide(depth)
-    @p.gen_legal_moves.sort_by {|m| m.to_s} .each { |m|
+    @p.gen_legal_moves.sort_by {|m| m.to_s}.each { |m|
       print m, "  "
       @p.make(m)
       puts perft(depth-1)

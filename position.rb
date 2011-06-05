@@ -182,17 +182,28 @@ class Position
 
 		# mark no-longer-possible castles
 		move.can_castle = @bitboards[CAN_CASTLE] # backup
+		# take care of current side castling rights
 		if move.piece == BKING
 			@bitboards[CAN_CASTLE] &= ~(4|8)
-		elsif move.piece == BROOK and move.from == 56
+		elsif (move.piece == BROOK and move.from == 56)
 			@bitboards[CAN_CASTLE] &= ~(4)
-		elsif move.piece == BROOK and move.from == 63
+		elsif (move.piece == BROOK and move.from == 63)
 			@bitboards[CAN_CASTLE] &= ~(8)
 		elsif move.piece == WKING
 			@bitboards[CAN_CASTLE] &= ~(1|2)
-		elsif move.piece == WROOK and move.from == 0
+		elsif (move.piece == WROOK and move.from == 0)
 			@bitboards[CAN_CASTLE] &= ~(1)
-		elsif move.piece == WROOK and move.from == 7
+		elsif (move.piece == WROOK and move.from == 7)
+			@bitboards[CAN_CASTLE] &= ~(2)
+		end
+		# take of other side
+		if move.capture == BROOK and move.to == 56
+			@bitboards[CAN_CASTLE] &= ~(4)
+		elsif move.capture == BROOK and move.to == 63
+			@bitboards[CAN_CASTLE] &= ~(8)
+		elsif move.capture == WROOK and move.to == 0
+			@bitboards[CAN_CASTLE] &= ~(1)
+		elsif move.capture == WROOK and move.to == 7
 			@bitboards[CAN_CASTLE] &= ~(2)
 		end
 
@@ -295,7 +306,7 @@ class Position
 	    return
 	  end
 		if move.piece == BPAWN and move.from > 47 and move.from < 56
-			@bitboards[ENPASSANT] = ( 1 << move.from-8) # I find that strange but if -8 then Perft(3) = 8904....
+			@bitboards[ENPASSANT] = ( 1 << move.from+8) # I find that strange but if -8 then Perft(3) = 8904....
 		elsif move.piece == WPAWN and move.from > 7 and move.from < 16
 			@bitboards[ENPASSANT] = ( 1 << move.from+8)
 		else

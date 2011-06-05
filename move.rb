@@ -23,6 +23,8 @@ class Move
     "#{SQUARENAME[@from]}#{SQUARENAME[@to]}" + (@promotion ? SYMBOLS[@promotion] : "")
   end
 
+  #"#{m.to_s}: capture=#{m.capture.to_s}, promotion=#{m.promotion.to_s}"
+
   def ==(b)
     @from == b.from and @to == b.to and @piece == b.piece and @capture == b.capture and
     @promotion == b.promotion and @can_castle == b.can_castle

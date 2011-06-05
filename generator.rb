@@ -49,8 +49,7 @@ class Position
     moves
   end
 
-
-  def gen_rook_type_moves(side, index, piece, start_limit = 8)
+  def gen_rook_type_moves(side, index, piece, start_limit = 7)
     moves = []
     rank = index / 8
     file = index % 8
@@ -62,6 +61,7 @@ class Position
         capture = piece_at(target)
         if !capture
           moves << Move.new(colored_piece(piece,side), index, target, capture)
+          #puts "inc=#{inc}, limit=#{limit}, target=#{index_to_case(target)}"# if piece == ROOK
         elsif side != color(capture)
           moves << Move.new(colored_piece(piece,side), index, target, capture)
           break
@@ -79,6 +79,7 @@ class Position
     moves = []
     rooks = @bitboards[colored_piece(ROOK,side)]
     indexes(rooks).each do |r|
+      #puts "==== #{index_to_case(r)}"
       moves += gen_rook_type_moves(side, r, ROOK)
     end
     moves
