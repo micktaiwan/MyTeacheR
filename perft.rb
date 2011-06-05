@@ -32,7 +32,7 @@ class Perft
 # 2.  0.00118620580087328
 
   def main
-    depth = 4
+    depth = 3
     pt = pretty_time(0.0012*Pre_perft[depth])
     puts "depth is #{depth}\n#{pt} to go"
     t = Time.now
@@ -41,7 +41,7 @@ class Perft
     puts "#{total} moves in #{pretty_time(s)}"
     puts "#{s/total} second per move"
     result = total == Pre_perft[depth]
-    puts result ? "Good result !" : "BAD result ! should have been #{Pre_perft[depth]} " #196981
+    puts result ? "Good result !" : "BAD result ! should have been #{Pre_perft[depth]} "
     exit (result ? 0 : 1)
   end
 

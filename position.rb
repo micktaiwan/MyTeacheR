@@ -160,10 +160,10 @@ class Position
 	  end
 
 		unset(move.piece, move.from)
-		if !move.promotion
-		  set(move.piece, move.to)
-		else
+		if move.promotion
 		  set(move.promotion, move.to)
+		else
+		  set(move.piece, move.to)
 		end
 
 		# handle castling
@@ -196,7 +196,7 @@ class Position
 			@bitboards[CAN_CASTLE] &= ~(2)
 		end
 
-    if piece_type(move.piece) != PAWN and move.capture == nil
+    if piece_type(move.piece) != PAWN and !move.capture
       @hclock += 1
     else
       @hclock = 0
@@ -211,8 +211,11 @@ class Position
 		move, = @history.pop
 		raise "unmake but no move in history" unless move
 
-		if(move.promotion) then unset(move.promotion, move.to)
-		else unset(move.piece, move.to) end
+		if(move.promotion)
+		  unset(move.promotion, move.to)
+		else
+		  unset(move.piece, move.to)
+	  end
 		set(move.piece, move.from)
 
     if(move.capture)
@@ -292,7 +295,7 @@ class Position
 	    return
 	  end
 		if move.piece == BPAWN and move.from > 47 and move.from < 56
-			@bitboards[ENPASSANT] = ( 1 << move.from+8) # I find that strange but if -8 then Perft(3) = 8904....
+			@bitboards[ENPASSANT] = ( 1 << move.from-8) # I find that strange but if -8 then Perft(3) = 8904....
 		elsif move.piece == WPAWN and move.from > 7 and move.from < 16
 			@bitboards[ENPASSANT] = ( 1 << move.from+8)
 		else
@@ -355,10 +358,10 @@ class Position
 	# Load Forsyth-Edwards Notation (FEN)
 	def load_fen(str)
 	  empty!
-	  state = :pieces
-	  castle = 0
-	  i   = 0
-	  pos = 56
+	  state   = :pieces
+	  castle  = 0
+	  i       = 0
+	  pos     = 56
 	  loop do
 	    if str[i].chr == ' '
 	      case state
@@ -372,9 +375,12 @@ class Position
     	    state = :hclock
         when :hclock
     	    state = :ply
+    	  else
+    	    raise "unknown state i==#{i}"
     	  end
         i += 1
     	end
+
     	case state
 	    when :pieces
 	      c = str[i]
@@ -412,7 +418,7 @@ class Position
           when 'k'
             castle |= 8
           else
-            raise "can not read this FEN position, because of encastle right misreading #{str}"
+            raise "can not read this FEN position, because of castle rights misreading. i==#{i}, #{str[i].chr}"
           end
           i += 1
         end

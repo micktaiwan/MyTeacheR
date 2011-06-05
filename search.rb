@@ -9,23 +9,24 @@ class Search
 
   include Constants
 
-  attr_reader :played_move, :position, :done, :stats
+  attr_reader :move, :position, :done, :stats, :score
   attr_accessor :debug
 
   def initialize(position)
     @p      = position
     @stats  = Stats.new(@p, self)
-    @debug = nil
+    @debug  = nil
+    @score  = 0
+    @move = nil
   end
 
   def play(type=:depth_first)
     @done = nil
-    @played_move = nil
     @stats.start_turn
 
     # type of play depends of the function used
     # random_move, simple
-    move, score = case type
+    @move, @score = case type
       when :iterative_search
         iterative_start
       when :depth_first
@@ -35,10 +36,9 @@ class Search
       else
         raise "unknown type of play '#{type.to_s}'"
       end
-    @stats.end_turn(score, move)
-    return false if not move
-    @p.make(move)
-    @played_move = move
+    @stats.end_turn(@score, @move)
+    return false if not @move
+    @p.make(@move)
     @done = true
     true
   end

@@ -78,6 +78,15 @@ describe Position, "(all tests)" do
     lambda { @p.unmake }.should raise_error
   end
 
+  it "should unmake correctly 2" do
+    @p.reset_to_starting_position
+    @p.gen_legal_moves.each { |m|
+      @p.make(m)
+      @p.unmake
+      @p.all_pieces.should == INIT_POSITION
+      }
+  end
+
   it "should load fen correctly" do
     #@p.load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
     @p.load_fen("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2")
