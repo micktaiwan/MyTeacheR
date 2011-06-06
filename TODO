@@ -28,6 +28,30 @@ Other
 - repetitions rule
 
 
+Current detailled TODO list:
+
+- See if there are other start_limit = 8 in generator.rb
+- Perft(4) = 196981 but should be 197281...
+- For legal moves, do not check it up-front, but wait until the move is detected as a good move (not pruned) and then verify if it is legal.
+- Started: Improve performance of legal move gen: moves generation really using bitboard (and premove tables ?)
+- Finish Quiescence search (do not evaluate all the moves)
+- Iterative deepening and move ordering to be able to limit search time
+- Setup a match routine between different versions of MyTeacher to see improvments ! :)
+
+Note from The Internet (very cool guy)
+
+"The speed of move generator is not very important.
+If you have a 20% faster move generator, your engine will be only 1% faster.
+
+More important is:
+-bugfree engine
+-good tactic (extension, checks and capture at first ply of quiescence)
+-good depth (nullmove with R 3, late move reduction, move sorting with history and killer move)
+
+NPS are useless, a very slow engine can have a very high depth search if you make reduction on useless move (lmr).
+You should test your engine on tactical test suite like WAC to estimate the level of each version."
+
+
 Board indexes
 =============
 
