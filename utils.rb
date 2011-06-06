@@ -32,7 +32,7 @@ module MyTeacherUtils
   end
 
   def colored_piece(piece, side)
-    raise "piece must be WHITE" if color(piece) != WHITE
+    piece = piece_type(piece)
     piece + (side == BLACK ? BLACKS_OFFSET : 0)
   end
 

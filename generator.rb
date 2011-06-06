@@ -85,7 +85,7 @@ class Position
     moves
   end
 
-  def gen_bishop_type_moves(side, index, piece, start_limit = 8)
+  def gen_bishop_type_moves(side, index, piece, start_limit = 7)
     moves = []
     [-9,-7,7,9].each do |inc|
       limit = start_limit
@@ -202,7 +202,7 @@ class Position
 			# generate en-passant
 			if @bitboards[ENPASSANT] != 0
 				passant = indexes(@bitboards[ENPASSANT]).first
-				if (p + attack_right) == passant or (p + attack_left) == passant
+				if ((p + attack_right) == passant and p % 8 != 7) or ((p + attack_left) == passant and p % 8 != 0)
           possible << Move.new(colored_piece(PAWN,side),p, p+attack_right)
 				end
 			end

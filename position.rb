@@ -137,11 +137,12 @@ class Position
     m.piece = piece_at(case_to_index(from))
     m.set(case_to_index(from), case_to_index(to))
     m.capture = piece_at(case_to_index(to))
-    if notation.size > 4
+    if notation.size > 4 # promotions
       s = notation[4].chr
       raise "unknown promotion symbol '#{s}'" if not ['Q', 'R', 'B', 'N'].include?(s.upcase)
       m.promotion = colored_piece(symbol_to_piece(s.upcase), @side)
     end
+    puts m.inspect
     make(m)
   end
 
@@ -311,10 +312,12 @@ class Position
 			@bitboards[ENPASSANT] = 0
 	    return
 	  end
-		if move.piece == BPAWN and move.from > 47 and move.from < 56
-			@bitboards[ENPASSANT] = ( 1 << move.from+8) # I find that strange but if -8 then Perft(3) = 8904....
-		elsif move.piece == WPAWN and move.from > 7 and move.from < 16
-			@bitboards[ENPASSANT] = ( 1 << move.from+8)
+		if move.piece == BPAWN and move.from > 47 and move.from < 56 and (move.from - move.to).abs == 16
+			@bitboards[ENPASSANT] = ( 1 << (move.from-8))
+			#puts "marking #{index_to_case(move.from-8)}"
+		elsif move.piece == WPAWN and move.from > 7 and move.from < 16 and (move.from - move.to).abs == 16
+			@bitboards[ENPASSANT] = ( 1 << (move.from+8))
+			#puts "marking #{index_to_case(move.from+8)}"
 		else
 			@bitboards[ENPASSANT] = 0
 		end

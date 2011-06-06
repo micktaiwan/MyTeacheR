@@ -34,8 +34,8 @@ class MyTeacher
     puts "show..............print the board"
     puts "reset.............reset the board to initial position"
     puts "load fen <fen>....load a FEN position"
-    puts "solo..............start an infinite loop playing alternatively"
-    puts "moves.............print all possible moves"
+    puts "solo..............start an infinite loop, computer playing alternatively"
+    puts "moves.............print all possible next moves for this position"
     puts "perft <n>.........display Perft(n)"
     puts "divide <n>........display Divide(n)"
   end
