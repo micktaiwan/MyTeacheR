@@ -130,12 +130,18 @@ class Position
   end
 
   def make_from_input(notation)
+    # TODO: test legality
     from = notation[0..1]
     to   = notation[2..3]
     m = Move.new
     m.piece = piece_at(case_to_index(from))
     m.set(case_to_index(from), case_to_index(to))
     m.capture = piece_at(case_to_index(to))
+    if notation.size > 4
+      s = notation[4].chr
+      raise "unknown promotion symbol '#{s}'" if not ['Q', 'R', 'B', 'N'].include?(s.upcase)
+      m.promotion = colored_piece(symbol_to_piece(s.upcase), @side)
+    end
     make(m)
   end
 

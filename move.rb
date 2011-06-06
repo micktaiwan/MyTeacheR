@@ -19,7 +19,7 @@ class Move
     @from, @to = from, to
   end
 
-  def to_s
+  def to_s # FIXME: promotion can be upcase or downcase, is it a good notation principle ?
     "#{SQUARENAME[@from]}#{SQUARENAME[@to]}" + (@promotion ? SYMBOLS[@promotion] : "")
   end
 

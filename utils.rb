@@ -19,7 +19,6 @@ module MyTeacherUtils
     SQUARENAME[c]
   end
 
-
   # return KING for WKING or BKING (or KING)
   def piece_type(piece)
     return piece if piece < BLACKS_OFFSET
@@ -33,6 +32,7 @@ module MyTeacherUtils
   end
 
   def colored_piece(piece, side)
+    raise "piece must be WHITE" if color(piece) != WHITE
     piece + (side == BLACK ? BLACKS_OFFSET : 0)
   end
 

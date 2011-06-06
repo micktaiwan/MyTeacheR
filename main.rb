@@ -26,11 +26,27 @@ class MyTeacher
     @s = Search.new(@p)
   end
 
+  # TODO: a command to launch xboard
+  def print_help
+    puts "e2e4..............play a move"
+    puts "play..............forces computer to play this position"
+    puts "unmake............back up one move"
+    puts "show..............print the board"
+    puts "reset.............reset the board to initial position"
+    puts "load fen <fen>....load a FEN position"
+    puts "solo..............start an infinite loop playing alternatively"
+    puts "moves.............print all possible moves"
+    puts "perft <n>.........display Perft(n)"
+    puts "divide <n>........display Divide(n)"
+  end
+
   def main
     loop {
       print ">"
       input = gets.strip
       case
+      when input=="help"
+        print_help
       when (input=="" or input=="play")
         puts "side: #{@p.side==WHITE ? "w":"b"}"
         start = Time.now
