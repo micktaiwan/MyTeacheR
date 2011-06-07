@@ -17,6 +17,9 @@ class Position
     init_attacks
 		@bitboards = Array.new(LAST_BOARD_INDEX+1, 0)
     reset_to_starting_position
+    #(0..63).each { |i|
+    #  puts file_occupancy(i).to_s(2)
+    #  }
   end
 
   def empty!

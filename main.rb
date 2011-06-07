@@ -93,10 +93,10 @@ class MyTeacher
 # history of s/n
 # 1.  0.00224942242589507
 # 2.  0.00118620580087328 with bitscan and knight bitboards
-# 3.  0.00110999253349284 with knig bitboards
+# 3.  0.00110999253349284 with king bitboards
 
   def do_perft(depth) # http://wismuth.com/chess/statistics-games.html
-    pt = pretty_time(0.00111*Pre_perft[depth])
+    pt = pretty_time(0.0011*Pre_perft[depth])
     puts "depth is #{depth}. #{pt} to go"
     t = Time.now
     total = perft(depth)
