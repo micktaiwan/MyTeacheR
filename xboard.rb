@@ -25,7 +25,7 @@ end
 def play p, s
 	Thread.new { s.play }
 	until s.done; sleep(0.2); end
-	move = s.played_move
+	move = s.move
 	if not move
 		puts "RESULT 1-0 {White Mates}"
 	end

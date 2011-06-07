@@ -37,17 +37,15 @@ class Position
 
   def gen_knights_moves(side)
     moves = []
+    other_color = (side == WHITE ? ~@all_whites : ~@all_blacks)
     indexes(@bitboards[colored_piece(KNIGHT,side)]).each { |i|
-      [-17, -15, -10, -6, 6, 10, 15, 17].each do |m|
-        target = i+m
-        if target >= 0 and target <= 63 and ((target % 8) - (i % 8)).abs < 3
-          capture = piece_at(target)
-          moves << Move.new(colored_piece(KNIGHT,side), i, target, capture) if !capture or side!=color(capture)
-        end
-      end
+      indexes(@knight_attacks[i] & other_color).each { |target|
+        moves << Move.new(colored_piece(KNIGHT,side), i, target, piece_at(target))
+        }
       }
     moves
   end
+
 
   def gen_rook_type_moves(side, index, piece, start_limit = 7)
     moves = []
@@ -222,7 +220,7 @@ class Position
 		if can_castle(side, KINGSIDE)
 			test = if(side==BLACK) then [60,61,62]; else [4,5,6] end
 
-		  if !piece_at(test[1]) and !piece_at(test[2])
+		  if !piece_at(test[1]) and !piece_at(test[2]) # TODO: something like if (!(maskF1G1 & ~occupiedSquares))
   		  # FIXME: repeated code
 			  left = prune_king_revealers(side, test.map {|dest| Move.new(kpiece, king_index, dest)})
 			  goodcastles << Move.new(kpiece, king_index, test.last) if left.size == test.size
@@ -240,7 +238,7 @@ class Position
 			  extra = 1
 			end
 
-		  if !piece_at(test[1]) and !piece_at(test[2]) and !piece_at(extra)
+		  if !piece_at(test[1]) and !piece_at(test[2]) and !piece_at(extra) # TODO: something like if (!(maskF1G1 & ~occupiedSquares))
   		  # FIXME: repeated code
 			  left = prune_king_revealers(side, test.map {|dest| Move.new(kpiece, king_index, dest)})
         goodcastles << Move.new(kpiece, king_index, test.last) if left.size == test.size
@@ -257,7 +255,7 @@ class Position
 		moves.select do |m|
 			make(m)
 			next_moves = gen_moves(1-side)
-			king = indexes(@bitboards[kpiece])[0]
+			king = indexes(@bitboards[kpiece]).first
 			select_ret = true
 			next_moves.each do |m|
 				if m.to == king
@@ -271,11 +269,11 @@ class Position
 	end
 
 	def gen_king_moves(side)
+		king_i = indexes(@bitboards[colored_piece(KING, side)]).first
 		moves = []
-		king_i = indexes(@bitboards[colored_piece(KING, side)])[0]
-		return [] if king_i == nil
-		moves += gen_rook_type_moves(side, king_i, KING, 1)
-		moves += gen_bishop_type_moves(side, king_i, KING, 1)
+		indexes(@king_attacks[king_i] & (side == WHITE ? ~@all_whites : ~@all_blacks)).each { |target|
+      moves << Move.new(colored_piece(KING, side), king_i, target, piece_at(target))
+  		}
 		moves += gen_castle_moves(side, king_i)
 		moves
 	end

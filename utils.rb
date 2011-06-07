@@ -60,19 +60,34 @@ module MyTeacherUtils
     rv
   end
 
-  # useless :)
-  def dec2bin(number)
-    number = Integer(number);
-    if(number == 0)
-      return 0;
-    end
-    ret_bin = "";
-    # Until val is zero, convert it into binary format
-    while(number != 0)
-      ret_bin = String(number % 2) + ret_bin;
-      number = number / 2;
-    end
-    return ret_bin;
+  def dec2bin(n)
+    n.to_s(2)
+  end
+
+  def bin2dec(number)
+    Integer("0b"+number)
+  end
+
+  def print_board(bb)
+    ind = indexes(bb)
+    i = 0
+    [56,48,40,32,24,16,8,0].each { |i|
+      (0..7).each { |j|
+        p = ind.include?(i+j)
+        if p
+          print ' X |'
+        else
+          if (i+j)%2 == 0
+            print '   |'
+          else
+            print '   |' # white
+          end
+        end
+        }
+      puts
+      }
+    puts
+
   end
 
 end
