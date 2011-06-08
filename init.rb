@@ -1,12 +1,9 @@
 class Position
 
   def init_attacks
-    init_bitset
-    init_file_magic
-    init_rank_shift
-    init_ranks_and_files
     init_knight_attacks
     init_king_attacks
+    init_rook_attacks
   end
 
   def init_knight_attacks
@@ -79,34 +76,49 @@ class Position
   end
 
 	def init_rook_attacks
-	  @rook_attacks = Array.new                         # board indexes
-	  (0..63).each { |i| @rook_attacks[i] = Array.new } # 6 bits (0..63) occupancies
-    (0..63).each { |square|
-    (0..63).each { |state6Bit|
-      @rook_attacks[square][state6Bit] = @rank_attacks[square][state6Bit] | @file_attacks[square][state6Bit]
-      }}
+    init_bitset
+    init_file_magic
+    init_rank_shift
+    init_ranks_and_files
+    init_char_bitset
+    init_rank_file_attacks
 	end
 
-  def rank_occupancy(index)
-    (@all_pieces & @rank_mask[index]) >> @rank_shift[index]
+  def init_rank_file_attacks
+    @rook_attacks = Array.new
+    (0..7).each { |i|
+      @rook_attacks[i] = Array.new
+      (0..63).each { |state6Bit|
+        state8Bit = state6Bit << 1 # create an 8-bit occupancy state
+        attack8Bit = 0
+        attack8Bit |= @char_bitset[i+1] if (i < 7)
+        slide = i + 2
+        while (slide <= 7) # slide in '+' direction
+          break if ((~state8Bit) & (@char_bitset[slide-1]) == 0)
+          attack8Bit |= @char_bitset[slide]
+          slide += 1
+        end
+        attack8Bit |= @char_bitset[i-1] if (i > 0)
+        slide = i - 2
+        while (slide >= 0) # slide in '-' direction
+          break if ((~state8Bit) & (@char_bitset[slide+1]) == 0)
+          attack8Bit |= @char_bitset[slide]
+          slide -= 1
+        end
+        @rook_attacks[i][state6Bit] = attack8Bit
+        #puts "#{i}: #{state6Bit.to_s(2)} =>  #{attack8Bit.to_s(2)}"
+        }
+      }
   end
 
-  def file_occupancy(index)
-    (((@all_pieces & @file_mask[index]) * @file_magic[index]) >> 57) & FILE_OCCUPANCY_MASK
-  end
-
-  def init_rank_attacks
-    @rank_attacks = Array.new
-    (0..63).each { |i| @rank_attacks[i] = Array.new }
-    (0..63).each { |square|
-    (0..63).each { |state6Bit|
-#      @rank_attacks[square][state6Bit] =
-#        BitMap(GEN_SLIDING_ATTACKS[FILES[square]-1][state6Bit]) << (RANKSHIFT[square] - 1)
-      }}
-  end
-
-  def rank_moves(index)
-    @rank_attacks[index][((@all_pieces & @rank[from]) * someMAGIC[from]) >> 57] & targetBitmap;
+  # initialize CHARBITSET, this array is equivalant to BITSET for bitboards:
+  # 8 chars, each with only 1 bit set.
+  def init_char_bitset
+    @char_bitset = Array.new
+    @char_bitset[0] = 1
+    (1..7).each { |i|
+      @char_bitset[i] = @char_bitset[i-1] << 1
+      }
   end
 
 end

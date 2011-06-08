@@ -37,39 +37,44 @@ class Position
 
   def gen_knights_moves(side)
     moves = []
-    other_color = (side == WHITE ? ~@all_whites : ~@all_blacks)
+    other_color_or_empty = (side == WHITE ? ~@all_whites : ~@all_blacks)
+    piece = colored_piece(KNIGHT,side)
     indexes(@bitboards[colored_piece(KNIGHT,side)]).each { |i|
-      indexes(@knight_attacks[i] & other_color).each { |target|
-        moves << Move.new(colored_piece(KNIGHT,side), i, target, piece_at(target))
+      indexes(@knight_attacks[i] & other_color_or_empty).each { |target|
+        moves << Move.new(piece, i, target, piece_at(target))
         }
       }
     moves
   end
 
+  def rank_occupancy(index)
+    (@all_pieces & @rank_mask[index]) >> @rank_shift[index]
+  end
 
-  def gen_rook_type_moves(side, index, piece, start_limit = 7)
+  def file_occupancy(index)
+    (((@all_pieces & @file_mask[index]) * @file_magic[index]) >> 57) & FILE_OCCUPANCY_MASK
+  end
+
+  def rook_moves(index)
+    #rv = @rook_attacks[index%8][rank_occupancy(index)]  << (@rank_shift[index] - 1)# |
+    rv = (@rook_attacks[index/8][file_occupancy(index)] * @file_magic[index]) # ???
+    puts index
+    printp
+    #print_board(rv)
+    print_board(file_occupancy(index))
+    gets
+    rv
+  end
+
+  def gen_rook_type_moves(side, piece)
     moves = []
-    rank = index / 8
-    file = index % 8
-    [-8,-1,1,8].each do |inc|
-      limit = start_limit
-      target = index + inc
-      while limit > 0 and target >= 0 and target <= 63 and
-           (rank == (target / 8) or file == (target % 8)) do
-        capture = piece_at(target)
-        if !capture
-          moves << Move.new(colored_piece(piece,side), index, target, capture)
-          #puts "inc=#{inc}, limit=#{limit}, target=#{index_to_case(target)}"# if piece == ROOK
-        elsif side != color(capture)
-          moves << Move.new(colored_piece(piece,side), index, target, capture)
-          break
-        else
-          break
-        end
-        target += inc
-        limit -= 1
-      end
-    end
+    other_color_or_empty = (side == WHITE ? ~@all_whites : ~@all_blacks)
+    cpiece = colored_piece(piece,side)
+    indexes(@bitboards[cpiece]).each { |i|
+      indexes(rook_moves(i) & other_color_or_empty).each { |target|
+        moves << Move.new(cpiece, i, target, piece_at(target))
+        }
+      }
     moves
   end
 
@@ -77,8 +82,7 @@ class Position
     moves = []
     rooks = @bitboards[colored_piece(ROOK,side)]
     indexes(rooks).each do |r|
-      #puts "==== #{index_to_case(r)}"
-      moves += gen_rook_type_moves(side, r, ROOK)
+      moves += gen_rook_type_moves(side, ROOK)
     end
     moves
   end
@@ -123,7 +127,7 @@ class Position
 		moves = []
 		queens = @bitboards[colored_piece(QUEEN,side)]
 		indexes(queens).each do |r|
-			moves += gen_rook_type_moves(side, r, QUEEN)
+			moves += gen_rook_type_moves(side, QUEEN)
 			moves += gen_bishop_type_moves(side, r, QUEEN)
 		end
 		moves
@@ -249,12 +253,13 @@ class Position
 		goodcastles
 	end
 
+
 	def prune_king_revealers(side, moves)
 	  #puts "prune_king_revealers: #{side}, #{moves.size} moves"
 		kpiece = colored_piece(KING,side)
 		moves.select do |m|
 			make(m)
-			next_moves = gen_moves(1-side)
+			next_moves = gen_moves(1-side) # TODO: replace by the "reverse the perspective" method
 			king = indexes(@bitboards[kpiece]).first
 			select_ret = true
 			next_moves.each do |m|
