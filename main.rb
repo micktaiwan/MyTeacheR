@@ -97,7 +97,7 @@ class MyTeacher
 # 4.  0.00105323814873062 with rook moves (and queens using rooks moves)
 
   def do_perft(depth) # http://wismuth.com/chess/statistics-games.html
-    pt = pretty_time(0.0011*Pre_perft[depth])
+    pt = pretty_time(0.001055*Pre_perft[depth])
     puts "depth is #{depth}. #{pt} to go"
     t = Time.now
     total = perft(depth)

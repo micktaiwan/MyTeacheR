@@ -62,7 +62,6 @@ class Position
    bb ^=        t ^ ( t >> 18)
    t   = K1 & (bb ^ (bb <<  9))
    bb ^=        t ^ ( t >>  9)
-   bb
   end
 
   def flipVertical(bb)
