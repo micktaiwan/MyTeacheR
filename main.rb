@@ -94,6 +94,7 @@ class MyTeacher
 # 1.  0.00224942242589507
 # 2.  0.00118620580087328 with bitscan and knight bitboards
 # 3.  0.00110999253349284 with king bitboards
+# 4.  0.00105323814873062 with rook moves (and queens using rooks moves)
 
   def do_perft(depth) # http://wismuth.com/chess/statistics-games.html
     pt = pretty_time(0.0011*Pre_perft[depth])

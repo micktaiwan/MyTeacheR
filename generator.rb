@@ -55,25 +55,43 @@ class Position
     (((@all_pieces & @file_mask[index]) * @file_magic[index]) >> 57) & FILE_OCCUPANCY_MASK
   end
 
-  def rook_moves(index)
-    #rv = @rook_attacks[index%8][rank_occupancy(index)]  << (@rank_shift[index] - 1)# |
-    rv = (@rook_attacks[index/8][file_occupancy(index)] * @file_magic[index]) # ???
-    puts index
-    printp
-    #print_board(rv)
-    print_board(file_occupancy(index))
-    gets
-    rv
+  def flipDiagA8H1(bb)
+   t   =       bb ^ (bb << 36)
+   bb ^= K4 & ( t ^ (bb >> 36))
+   t   = K2 & (bb ^ (bb << 18))
+   bb ^=        t ^ ( t >> 18)
+   t   = K1 & (bb ^ (bb <<  9))
+   bb ^=        t ^ ( t >>  9)
+   bb
   end
 
-  def gen_rook_type_moves(side, piece)
+  def flipVertical(bb)
+    return  ( (bb << 56)                        ) |
+            ( (bb << 40) & (0x00ff000000000000) ) |
+            ( (bb << 24) & (0x0000ff0000000000) ) |
+            ( (bb <<  8) & (0x000000ff00000000) ) |
+            ( (bb >>  8) & (0x00000000ff000000) ) |
+            ( (bb >> 24) & (0x0000000000ff0000) ) |
+            ( (bb >> 40) & (0x000000000000ff00) ) |
+            ( (bb >> 56) )
+  end
+
+  # http://chessprogramming.wikispaces.com/Flipping+Mirroring+and+Rotating#The whole Bitboard-Rotating-By 90 degrees Clockwise
+  def rotate(bb)
+    flipDiagA8H1(flipVertical(bb))
+  end
+
+  def rook_moves(index)
+    @rook_attacks[index%8][rank_occupancy(index)]  << (@rank_shift[index] - 1) |
+    rotate(@rook_attacks[7-index/8][file_occupancy(index)]) << index % 8
+  end
+
+  def gen_rook_type_moves(side, index, piece)
     moves = []
     other_color_or_empty = (side == WHITE ? ~@all_whites : ~@all_blacks)
     cpiece = colored_piece(piece,side)
-    indexes(@bitboards[cpiece]).each { |i|
-      indexes(rook_moves(i) & other_color_or_empty).each { |target|
-        moves << Move.new(cpiece, i, target, piece_at(target))
-        }
+    indexes(rook_moves(index) & other_color_or_empty).each { |target|
+      moves << Move.new(cpiece, index, target, piece_at(target))
       }
     moves
   end
@@ -82,7 +100,7 @@ class Position
     moves = []
     rooks = @bitboards[colored_piece(ROOK,side)]
     indexes(rooks).each do |r|
-      moves += gen_rook_type_moves(side, ROOK)
+      moves += gen_rook_type_moves(side, r, ROOK)
     end
     moves
   end
@@ -127,7 +145,7 @@ class Position
 		moves = []
 		queens = @bitboards[colored_piece(QUEEN,side)]
 		indexes(queens).each do |r|
-			moves += gen_rook_type_moves(side, QUEEN)
+			moves += gen_rook_type_moves(side, r, QUEEN)
 			moves += gen_bishop_type_moves(side, r, QUEEN)
 		end
 		moves
