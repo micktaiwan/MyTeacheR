@@ -28,17 +28,25 @@ class MyTeacher
 
   # TODO: a command to launch xboard
   def print_help
+    puts
+    puts "********* PLAY"
     puts "e2e4..............play a move"
     puts "play..............forces computer to play this position"
     puts "unmake............back up one move"
     puts "show..............print the board"
+    puts
+    puts "********* UTILS"
     puts "reset.............reset the board to initial position"
     puts "load fen <fen>....load a FEN position"
     puts "solo..............start an infinite loop, computer playing alternatively"
+    puts
+    puts "********** DEBUG AND TEST"
     puts "moves.............print all possible next moves for this position"
     puts "perft <n>.........display Perft(n)"
     puts "divide <n>........display Divide(n)"
-    puts "test <n>..........generate all possible moves for a suite of position a depth n"
+    puts "test <n>..........generate all possible moves for a suite of positions at depth n"
+    puts "ptest.............performance test suite (TODO)"
+    puts
   end
 
   def main
