@@ -23,9 +23,9 @@ class Position
   end
 
   def empty!
-    (WHITE_KING..BLACK_PAWNS).each { |i|
+    for i in WHITE_KING..BLACK_PAWNS
       @bitboards[i] = 0
-      }
+    end
     @all_whites = @all_blacks = @all_pieces = 0
     @side = WHITE
     @ep   = -1
@@ -87,9 +87,9 @@ class Position
 
 	def ==(pos)
 	  rv = true
-	  (0..LAST_BOARD_INDEX).each { |i|
+	  for i in (0..LAST_BOARD_INDEX)
 	    rv = rv and @bitboards[i] == pos.bitboards[i]
-	    }
+	  end
 	  rv and
 		@history    == pos.history and
 		@side       == pos.side and
@@ -104,8 +104,8 @@ class Position
 
   def printp
     i = 0
-    [56,48,40,32,24,16,8,0].each { |i|
-      (0..7).each { |j|
+    [56,48,40,32,24,16,8,0].each do |i|
+      for j in 0..7
         p = piece_at(i+j)
         if p
           print ' ' + SYMBOLS[p] + ' |'
@@ -116,9 +116,9 @@ class Position
             print '   |' # white
           end
         end
-        }
+      end
       puts
-      }
+    end
     puts
   end
 
@@ -330,13 +330,13 @@ class Position
 		bit = (1 << index)
 		if @all_pieces & bit > 0
   		if @all_whites & bit > 0
-  		  (KING..PAWN).each { |piece|
+  		  for piece in KING..PAWN
     			return piece if (@bitboards[piece] & bit) > 0
-    			}
+    	  end
   		elsif @all_blacks & bit > 0
-  		  (BKING..BPAWN).each { |piece|
+  		  for piece in BKING..BPAWN
     			return piece if (@bitboards[piece] & bit) > 0
-    			}
+    		end
   		end
 		end
 		return nil

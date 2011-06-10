@@ -10,9 +10,9 @@ describe Search, "" do
   end
 
   it "should play as white the first move if asked" do
-    @s.played_move.should eq(nil)
+    @s.move.should eq(nil)
     @s.play(:random).should eq(true)
-    m = @s.played_move
+    m = @s.move
     m.from.should > 0
     @p.ply.should  eq 1
     @p.hply.should eq 1
@@ -47,9 +47,9 @@ describe Search, "" do
   it "should do the last move" do
     @p.load_fen("2r2k1r/p4ppp/2QBp3/1B1p4/3P4/P3P3/4N1P1/1R4K1 b - - 4 30")
     @s.play
-    @s.played_move.to_s.should == "f8g8"
+    @s.move.to_s.should == "f8g8"
     @s.play # FIXME: 5 seconds to find it....
-    @s.played_move.to_s.should == "c6c8"
+    @s.move.to_s.should == "c6c8"
   end
 
 end

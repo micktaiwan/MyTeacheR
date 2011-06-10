@@ -90,7 +90,9 @@ class Search
   def search_root(a,b,depth)
     return [0,nil] if(depth == 0)
     best = nil
-    @p.gen_legal_moves.each do |m|
+    moves = @p.gen_legal_moves
+    #sort_moves!(moves)
+    for m in moves
       @stats.inc_turn_nodes
       @p.make(m)
       score = -negamax(-b, -a, depth-1)
@@ -117,7 +119,8 @@ class Search
     #return factor*evaluate() if(depth == 0)
     moves = @p.gen_legal_moves
     return factor*99999 if moves.size == 0
-    moves.each do |m|
+    #sort_moves!(moves)
+    for m in moves
       @stats.inc_turn_nodes
       @p.make(m)
       score = -negamax(-b, -a, depth-1)
@@ -148,7 +151,7 @@ class Search
     #moves = moves.sort_by { |m| -m[1] }
     #moves = moves.map { |m| m[0] }
 
-    moves.each do |m|
+    for m in moves
       @p.make(m)
       score = -quiesce( -beta, -alpha, depth+1 )
       @p.unmake
@@ -178,5 +181,13 @@ class Search
     return value
   end
 
+  def sort_moves!(moves)
+    moves = moves.sort_by { |m|
+      @p.make(m)
+      rv = eval_material
+      @p.unmake
+      rv
+      }
+  end
 end
 

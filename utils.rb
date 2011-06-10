@@ -32,8 +32,16 @@ module MyTeacherUtils
   end
 
   def colored_piece(piece, side)
-    piece = piece_type(piece)
-    piece + (side == BLACK ? BLACKS_OFFSET : 0)
+    # quicker than below....
+    if side == BLACK
+      return piece if piece >= BLACKS_OFFSET
+      return piece + BLACKS_OFFSET
+    else
+      return piece if piece < BLACKS_OFFSET
+      return piece - BLACKS_OFFSET
+    end
+    #piece = piece_type(piece)
+    #piece + (side == BLACK ? BLACKS_OFFSET : 0)
   end
 
   def color(piece)

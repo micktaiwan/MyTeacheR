@@ -36,7 +36,7 @@ class Stats
   end
 
   def print_end_turn_stats
-    puts "#{@p.ply}. #{@s.played_move} (turn moves: #{@current_turn_nodes}, moy: #{round(@total_nodes/@p.ply)}) hclock=#{@p.hclock}"
+    puts "#{@p.ply}. #{@s.move} (turn moves: #{@current_turn_nodes}, moy: #{round(@total_nodes/@p.ply)}) hclock=#{@p.hclock}"
   end
 
   def print_verbose_stats

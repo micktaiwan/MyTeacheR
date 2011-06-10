@@ -18,13 +18,12 @@ class Position
 
   # generate pseudo legal moves
   def gen_moves(side=@side)
-    m = gen_knights_moves(side) +
-        gen_rooks_moves(side) +
-        gen_bishops_moves(side) +
-        gen_queens_moves(side) +
-        gen_pawns_moves(side) +
-        gen_king_moves(side)
-    m.sort_by { |m| m.score }
+    gen_knights_moves(side) +
+    gen_rooks_moves(side) +
+    gen_bishops_moves(side) +
+    gen_queens_moves(side) +
+    gen_pawns_moves(side) +
+    gen_king_moves(side)
   end
 
   def gen_legal_captures(side=@side)
@@ -39,11 +38,11 @@ class Position
     moves = []
     other_color_or_empty = (side == WHITE ? ~@all_whites : ~@all_blacks)
     piece = colored_piece(KNIGHT,side)
-    indexes(@bitboards[colored_piece(KNIGHT,side)]).each { |i|
-      indexes(@knight_attacks[i] & other_color_or_empty).each { |target|
+    for i in indexes(@bitboards[colored_piece(KNIGHT,side)])
+      for target in indexes(@knight_attacks[i] & other_color_or_empty)
         moves << Move.new(piece, i, target, piece_at(target))
-        }
-      }
+      end
+    end
     moves
   end
 
@@ -89,16 +88,16 @@ class Position
     moves = []
     other_color_or_empty = (side == WHITE ? ~@all_whites : ~@all_blacks)
     cpiece = colored_piece(piece,side)
-    indexes(rook_moves(index) & other_color_or_empty).each { |target|
+    for target in indexes(rook_moves(index) & other_color_or_empty)
       moves << Move.new(cpiece, index, target, piece_at(target))
-      }
+    end
     moves
   end
 
   def gen_rooks_moves(side)
     moves = []
     rooks = @bitboards[colored_piece(ROOK,side)]
-    indexes(rooks).each do |r|
+    for r in indexes(rooks)
       moves += gen_rook_type_moves(side, r, ROOK)
     end
     moves
@@ -106,7 +105,7 @@ class Position
 
   def gen_bishop_type_moves(side, index, piece, start_limit = 7)
     moves = []
-    [-9,-7,7,9].each do |inc|
+    for inc in [-9,-7,7,9]
       limit = start_limit
       target = index + inc
       rank = target / 8
@@ -134,7 +133,7 @@ class Position
   def gen_bishops_moves(side)
     moves = []
     bishops = @bitboards[colored_piece(BISHOP,side)]
-    indexes(bishops).each do |r|
+    for r in indexes(bishops)
       moves += gen_bishop_type_moves(side, r, BISHOP)
     end
     moves
@@ -143,7 +142,7 @@ class Position
   def gen_queens_moves(side)
 		moves = []
 		queens = @bitboards[colored_piece(QUEEN,side)]
-		indexes(queens).each do |r|
+		for r in indexes(queens)
 			moves += gen_rook_type_moves(side, r, QUEEN)
 			moves += gen_bishop_type_moves(side, r, QUEEN)
 		end
@@ -151,7 +150,6 @@ class Position
 	end
 
 	def gen_pawns_moves(side)
-		pawns = @bitboards[colored_piece(PAWN, side)]
 		if side==BLACK
 			in_front_int      = -8
 			second_rank_high  = 56
@@ -173,23 +171,23 @@ class Position
 			promote_high      = 64
 			promotes          = [WROOK, WQUEEN, WKNIGHT, WBISHOP]
 		end
-		do_pawn = Proc.new do |p|
-			possible = []
+		moves = []
+		for p in indexes(@bitboards[colored_piece(PAWN, side)])
 			in_front = piece_at(p+in_front_int)
 			#single step + promotion
 			if !in_front
 				in_front_pos = p + in_front_int
 				if in_front_pos > promote_low and in_front_pos < promote_high
-					promotes.each { |piece|
-            possible << Move.new(colored_piece(PAWN,side),p,in_front_pos, nil, piece)
-					  }
+					for piece in promotes
+            moves << Move.new(colored_piece(PAWN,side),p,in_front_pos, nil, piece)
+					end
 				else
-  				possible << Move.new(colored_piece(PAWN,side),p,in_front_pos)
+  				moves << Move.new(colored_piece(PAWN,side),p,in_front_pos)
 				end
 			end
 			#double jump
 			if p < second_rank_high and p > second_rank_low and !in_front and !piece_at(p+two_away_int)
-        possible << Move.new(colored_piece(PAWN,side),p, p+two_away_int)
+        moves << Move.new(colored_piece(PAWN,side),p, p+two_away_int)
 			end
 			#captures
 			unless p % 8 == 0 # we're in the a file
@@ -197,11 +195,11 @@ class Position
 				if ptarget and side != color(ptarget)
 				  if p + attack_left > promote_low and p + attack_left < promote_high
 				    # promotions while capturing
-					  promotes.each { |piece|
-              possible << Move.new(colored_piece(PAWN,side),p,p+attack_left, ptarget, piece)
-					    }
+					  for piece in promotes
+              moves << Move.new(colored_piece(PAWN,side),p,p+attack_left, ptarget, piece)
+					  end
 					else
-            possible << Move.new(colored_piece(PAWN,side),p, p+attack_left, ptarget)
+            moves << Move.new(colored_piece(PAWN,side),p, p+attack_left, ptarget)
 				  end
 				end
 			end
@@ -210,11 +208,11 @@ class Position
 				if ptarget and side != color(ptarget)
 				  if p + attack_right > promote_low and p + attack_right < promote_high
 				    # promotions while capturing
-					  promotes.each { |piece|
-              possible << Move.new(colored_piece(PAWN,side),p,p + attack_right, ptarget, piece)
-					    }
+					  for piece in promotes
+              moves << Move.new(colored_piece(PAWN,side),p,p + attack_right, ptarget, piece)
+					  end
 					else
-            possible << Move.new(colored_piece(PAWN,side),p, p+attack_right, ptarget)
+            moves << Move.new(colored_piece(PAWN,side),p, p+attack_right, ptarget)
 				  end
 				end
 			end
@@ -222,14 +220,9 @@ class Position
 			if @bitboards[ENPASSANT] != 0
 				passant = indexes(@bitboards[ENPASSANT]).first
 				if ((p + attack_right) == passant and p % 8 != 7) or ((p + attack_left) == passant and p % 8 != 0)
-          possible << Move.new(colored_piece(PAWN,side),p, p+attack_right)
+          moves << Move.new(colored_piece(PAWN,side),p, p+attack_right)
 				end
 			end
-			possible
-		end
-		moves = []
-		indexes(pawns).each do |p|
-			moves += do_pawn.call(p)
 		end
 		moves
 	end
@@ -279,7 +272,7 @@ class Position
 			next_moves = gen_moves(1-side) # TODO: replace by the "reverse the perspective" method
 			king = indexes(@bitboards[kpiece]).first
 			select_ret = true
-			next_moves.each do |m|
+			for m in next_moves
 				if m.to == king
 					select_ret = false
 					break
@@ -293,9 +286,9 @@ class Position
 	def gen_king_moves(side)
 		king_i = indexes(@bitboards[colored_piece(KING, side)]).first
 		moves = []
-		indexes(@king_attacks[king_i] & (side == WHITE ? ~@all_whites : ~@all_blacks)).each { |target|
+		for target in indexes(@king_attacks[king_i] & (side == WHITE ? ~@all_whites : ~@all_blacks))
       moves << Move.new(colored_piece(KING, side), king_i, target, piece_at(target))
-  		}
+  	end
 		moves += gen_castle_moves(side, king_i)
 		moves
 	end

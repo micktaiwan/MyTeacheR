@@ -38,6 +38,7 @@ class MyTeacher
     puts "moves.............print all possible next moves for this position"
     puts "perft <n>.........display Perft(n)"
     puts "divide <n>........display Divide(n)"
+    puts "test <n>..........generate all possible moves for a suite of position a depth n"
   end
 
   def main
@@ -92,12 +93,13 @@ class MyTeacher
 
 # history of s/n
 # 1.  0.00224942242589507
-# 2.  0.00118620580087328 with bitscan and knight bitboards
-# 3.  0.00110999253349284 with king bitboards
-# 4.  0.00105323814873062 with rook moves (and queens using rooks moves)
+# 2.  0.00118620580087328  with bitscan and knight bitboards
+# 3.  0.00110999253349284  with king bitboards
+# 4.  0.00105323814873062  with rook moves (and queens using rooks moves)
+# 5   0.000979309031678275 without Proc.new and tweaking colored_piece
 
   def do_perft(depth) # http://wismuth.com/chess/statistics-games.html
-    pt = pretty_time(0.001055*Pre_perft[depth])
+    pt = pretty_time(0.000985*Pre_perft[depth])
     puts "depth is #{depth}. #{pt} to go"
     t = Time.now
     total = perft(depth)
