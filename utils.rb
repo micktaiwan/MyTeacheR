@@ -9,6 +9,12 @@ module MyTeacherUtils
     SYMBOLS.index(sym)
   end
 
+  # BBISHOP => 'b'
+  def piece_to_symbol(piece)
+    SYMBOLS[piece]
+  end
+
+
   # "a1" => 0
   def case_to_index(c)
     SQUARENAME.index(c)

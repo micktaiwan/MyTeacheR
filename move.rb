@@ -2,6 +2,7 @@ require 'constants'
 
 class Move
   include Constants
+  include MyTeacherUtils
 
 	attr_accessor :piece, :from, :to, :capture, :promotion, :can_castle, :enpassant
 
@@ -20,7 +21,7 @@ class Move
   end
 
   def to_s # FIXME: promotion can be upcase or downcase, is it a good notation principle ?
-    "#{SQUARENAME[@from]}#{SQUARENAME[@to]}" + (@promotion ? SYMBOLS[@promotion] : "")
+    "#{piece_to_symbol(@piece)}#{SQUARENAME[@from]}#{SQUARENAME[@to]}" + (@promotion ? SYMBOLS[@promotion] : "")
   end
 
   #"#{m.to_s}: capture=#{m.capture.to_s}, promotion=#{m.promotion.to_s}"

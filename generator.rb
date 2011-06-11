@@ -263,7 +263,6 @@ class Position
 		goodcastles
 	end
 
-
 	def prune_king_revealers(side, moves)
 	  #puts "prune_king_revealers: #{side}, #{moves.size} moves"
 		kpiece = colored_piece(KING,side)
@@ -274,6 +273,7 @@ class Position
 			select_ret = true
 			for m in next_moves
 				if m.to == king
+				  #puts "king captured! #{m} #{m.inspect}"
 					select_ret = false
 					break
 				end
@@ -285,6 +285,7 @@ class Position
 
 	def gen_king_moves(side)
 		king_i = indexes(@bitboards[colored_piece(KING, side)]).first
+		raise "No king ???" if !king_i
 		moves = []
 		for target in indexes(@king_attacks[king_i] & (side == WHITE ? ~@all_whites : ~@all_blacks))
       moves << Move.new(colored_piece(KING, side), king_i, target, piece_at(target))

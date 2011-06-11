@@ -13,13 +13,12 @@ class Position
   attr_reader :all_pieces, :all_whites, :all_blacks, :bitboards
   attr_reader :ply, :hply, :history, :side, :hclock
 
-  def initialize
+  def initialize(stats=nil)
+    @stats = stats
+    @stats.p = self if @stats
     init_attacks
 		@bitboards = Array.new(LAST_BOARD_INDEX+1, 0)
     reset_to_starting_position
-    #(0..63).each { |i|
-    #  puts file_occupancy(i).to_s(2)
-    #  }
   end
 
   def empty!
@@ -35,7 +34,7 @@ class Position
   end
 
   def is_empty?
-    @all_pieces == 0b0
+    @all_pieces == 0
   end
 
   def reset_to_starting_position
@@ -147,6 +146,7 @@ class Position
     end
     puts m.inspect
     make(m)
+    @stats.end_human_turn(m) if @stats
   end
 
   def make(move)

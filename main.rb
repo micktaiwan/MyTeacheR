@@ -22,8 +22,9 @@ class MyTeacher
   }
 
   def initialize
-    @p = Position.new
-    @s = Search.new(@p)
+    @stats  = Stats.new
+    @p      = Position.new(@stats)
+    @s      = Search.new(@p, @stats)
   end
 
   # TODO: a command to launch xboard
@@ -38,7 +39,7 @@ class MyTeacher
     puts "********* UTILS"
     puts "reset.............reset the board to initial position"
     puts "load fen <fen>....load a FEN position"
-    puts "solo..............start an infinite loop, computer playing alternatively"
+    puts "solo..............start an infinite loop, computer playing alternatively from current position"
     puts
     puts "********** DEBUG AND TEST"
     puts "moves.............print all possible next moves for this position"
@@ -89,6 +90,7 @@ class MyTeacher
 			  input.gsub!(/\?/, '')
 			  begin
 				  @p.make_from_input(input)
+				  @p.change_side if color(@p.history.last[0].piece) == @p.side # this test allow to move the same color 2 times (not real chess!)
 				  @p.printp
 			  #rescue IllegalMoveException
 				#  logout "Illegal move: #{input}"
@@ -172,7 +174,7 @@ class MyTeacher
 
   def solo
     loop {
-      @p.reset_to_starting_position
+      #@p.reset_to_starting_position
       loop {
         puts "side: #{@p.side==WHITE ? "w":"b"}"
         can_move = @s.play

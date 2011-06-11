@@ -5,10 +5,11 @@ class Stats
   include MyTeacherUtils
 
   attr_reader :current_turn_nodes
+  attr_accessor :p, :s
 
-  def initialize(p,s)
-    @p = p
-    @s = s
+  def initialize
+    @p = nil
+    @s = nil
     @total_nodes = 0
     @current_turn_nodes = 0
     @nb_moves_per_turn = []
@@ -35,6 +36,14 @@ class Stats
     puts "## end score: #{score.to_f/100}, best = #{move}, time = #{@time_per_turn.last}, nodes: #{@current_turn_nodes}, n/s: #{round(@current_turn_nodes.to_f/@time_per_turn.last)}" if @s.debug
   end
 
+  def end_human_turn(move)
+    @nb_moves_per_turn << nil
+    @time_per_turn << nil
+    @score_per_turn << nil
+    @nodes_per_second << nil
+    puts "## end score: #{score.to_f/100}, best = #{move}, time = #{@time_per_turn.last}, nodes: #{@current_turn_nodes}, n/s: #{round(@current_turn_nodes.to_f/@time_per_turn.last)}" if @s.debug
+  end
+
   def print_end_turn_stats
     puts "#{@p.ply}. #{@s.move} (turn moves: #{@current_turn_nodes}, moy: #{round(@total_nodes/@p.ply)}) hclock=#{@p.hclock}"
   end
@@ -43,11 +52,11 @@ class Stats
     puts "moves per turn:"
     puts pretty_array(@nb_moves_per_turn, :round)
     puts "time per turn:"
-    puts pretty_array(@time_per_turn, :pretty_time)
+    puts pretty_array(@time_per_turn,     :pretty_time)
     puts "n/s per turn:"
-    puts pretty_array(@nodes_per_second, :round)
+    puts pretty_array(@nodes_per_second,  :round)
     puts "score per turn:"
-    puts pretty_array(@score_per_turn, :round)
+    puts pretty_array(@score_per_turn,    :round)
   end
 
   def nodes_per_second
@@ -58,7 +67,13 @@ private
 
   def pretty_array(a, proc)
     rv = []
-    a.each_with_index { |item, index| rv << "  #{index+1}. #{method(proc).call(item)} (#{@p.history[index][0]})" }
+    a.each_with_index { |item, index|
+      if !item
+        rv << "  #{index+1}. Human (#{@p.history[index][0]})"
+      else
+        rv << "  #{index+1}. #{method(proc).call(item)} (#{@p.history[index][0]})"
+      end
+      }
     rv.join("\n")
   end
 

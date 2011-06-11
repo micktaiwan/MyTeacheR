@@ -12,12 +12,13 @@ class Search
   attr_reader :move, :position, :done, :stats, :score
   attr_accessor :debug
 
-  def initialize(position)
-    @p      = position
-    @stats  = Stats.new(@p, self)
-    @debug  = nil
-    @score  = 0
-    @move = nil
+  def initialize(position, stats=nil)
+    @p        = position
+    @stats    = stats
+    @stats.s  = self if @stats
+    @debug    = nil
+    @score    = 0
+    @move     = nil
   end
 
   def play(type=:depth_first)
@@ -122,6 +123,7 @@ class Search
     #sort_moves!(moves)
     for m in moves
       @stats.inc_turn_nodes
+      #return factor*99999 if king_captured?(m)
       @p.make(m)
       score = -negamax(-b, -a, depth-1)
       @p.unmake
@@ -152,6 +154,7 @@ class Search
     #moves = moves.map { |m| m[0] }
 
     for m in moves
+      #return factor*99999 if king_captured?(m)
       @p.make(m)
       score = -quiesce( -beta, -alpha, depth+1 )
       @p.unmake
@@ -189,5 +192,12 @@ class Search
       rv
       }
   end
+
+  def king_captured?(m)
+    return true if m.capture == WKING
+    return true if m.capture == BKING
+    false
+  end
+
 end
 
