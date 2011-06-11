@@ -22,8 +22,15 @@ class MyTeacher
   10=>69352859712417
   }
 
+  LIST = [
+    'play', 'unmake', 'show', 'help',
+    'reset', 'load fen ', 'solo',
+    'best on', 'best off', 'moves',
+    'perft ', 'divide ', 'test ', 'ptest'
+    ].sort
+
   def initialize
-    puts "Welcome ! Type 'help' to get... help"
+    puts "Welcome !\nType 'help' to get... help.\nPress TAB for autocompletion."
     @stats    = Stats.new
     @p        = Position.new(@stats)
     @s        = Search.new(@p, @stats)
@@ -57,7 +64,10 @@ class MyTeacher
 
   def main
     begin
-      while input = Readline.readline('>', true)
+      comp = proc { |s| LIST.grep( /^#{Regexp.escape(s)}/ ) }
+      Readline.completion_append_character = ""
+      Readline.completion_proc = comp
+      while input = Readline.readline('>', true) # TODO: autocompletion ! http://bogojoker.com/readline/
         case
         when input=="help"
           print_help
@@ -110,6 +120,7 @@ class MyTeacher
 				  #  logout "Illegal move: #{input}"
 			    rescue	Exception=> e
 				    puts e
+      		  puts e.backtrace
 			    end
         end
       end
@@ -211,7 +222,7 @@ class MyTeacher
         @p.load_fen fen
         puts
         puts "==== Problem ##{total+1}: #{fen} ===="
-        # puts "#{@side == WHITE ? "Whites":"Blacks"} to move" # FIXME: buggy
+        puts "#{@p.side == WHITE ? "Whites":"Blacks"} to move"
         @p.printp
         best_moves  = arr2[1].split(" ").map { |m| @p.algebraic_read(m)}
         puts "Best moves are #{best_moves.join(" ")}. Now searching for them..."
