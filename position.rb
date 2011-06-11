@@ -102,7 +102,7 @@ class Position
   end
 
   def moves_string(moves)
-    moves.map { |m| "#{SQUARENAME[m.from]}#{SQUARENAME[m.to]}" }.join(", ")
+    moves.map { |m| m.to_s }.join(", ")
   end
 
   def printp
@@ -148,7 +148,7 @@ class Position
       raise "unknown promotion symbol '#{s}'" if not ['Q', 'R', 'B', 'N'].include?(s.upcase)
       m.promotion = colored_piece(symbol_to_piece(s.upcase), @side)
     end
-    puts m.inspect
+    #puts m.inspect
     make(m)
     @stats.end_human_turn(m) if @stats
   end
@@ -171,7 +171,7 @@ class Position
     # check "bb" for Bishop and b file
     n[0] = 'B' if n[0].chr=='b' and n[1].chr=='b'
     # check "+" for checks
-    check = (n[-2].chr != '+' and n[-1].chr == "+" ? true : nil)
+    # check = (n[-2].chr != '+' and n[-1].chr == "+" ? true : nil)
     # promotions
     state = :begin
     i     = 0
@@ -192,8 +192,10 @@ class Position
         end
         i += 1
       when c == 'x'
-        is_capture = true
+        is_capture = true # FIXME: not used
         state = :capture
+        i += 1
+      when (c == '+' or c == '?' or c == '!')
         i += 1
       when( c >= 'a' and c <= 'h')
         from_file = file if file != nil
@@ -213,12 +215,12 @@ class Position
     piece = WPAWN if !piece
     target = case_to_index(file+rank)
     if(from_file)
-      moves = gen_legal_moves.select { |m| m.to == target and piece_type(m.piece) == piece and m.from%8 == from_file-'1'}
+      moves = gen_legal_moves.select { |m| m.to == target and piece_type(m.piece) == piece and m.from%8 == from_file[0]-'a'[0]}
     else
       moves = gen_legal_moves.select { |m| m.to == target and piece_type(m.piece) == piece}
     end
-    print "algebraic read: "
-    print_moves(moves)
+    #print "algebraic read: "
+    #print_moves(moves)
     raise "can't read the move" if moves.size != 1
     return moves.first
     #capture = piece_at(target)
@@ -528,7 +530,7 @@ class Position
     			@bitboards[ENPASSANT] = 0
           i += 1 # to skip next blank
     	  else
-    	    puts str[i].chr
+    	    #puts str[i].chr
     			@bitboards[ENPASSANT] = ( 1 << case_to_index(str[i,2]))
           i += 2
     	  end

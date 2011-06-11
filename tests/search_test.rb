@@ -5,8 +5,9 @@ include MyTeacherUtils
 describe Search, "" do
 
   before(:all) do
-    @p = Position.new
-    @s = Search.new(@p)
+    @stats = Stats.new
+    @p = Position.new(@stats)
+    @s = Search.new(@p, @stats)
   end
 
   it "should play as white the first move if asked" do
@@ -47,9 +48,9 @@ describe Search, "" do
   it "should do the last move" do
     @p.load_fen("2r2k1r/p4ppp/2QBp3/1B1p4/3P4/P3P3/4N1P1/1R4K1 b - - 4 30")
     @s.play
-    @s.move.to_s.should == "f8g8"
+    @s.move.to_s.should == "kf8g8"
     @s.play # FIXME: 5 seconds to find it....
-    @s.move.to_s.should == "c6c8"
+    @s.move.to_s.should == "Qc6xc8"
   end
 
 end

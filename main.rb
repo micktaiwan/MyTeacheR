@@ -3,7 +3,7 @@
 
 require 'position'
 require 'search'
-#require 'utils'
+require 'readline'
 
 class MyTeacher
 
@@ -42,7 +42,7 @@ class MyTeacher
     puts "********* UTILS"
     puts "reset.............reset the board to initial position"
     puts "load fen <fen>....load a FEN position"
-    puts "solo..............start an infinite loop, computer playing alternatively from current position"
+    puts "solo..............start an infinite loop, computer playing alternatively from current position. Ctrl-C to stop"
     puts "best on...........display best move while searching (default)"
     puts "best off..........do not display best move while searching"
     puts
@@ -57,9 +57,7 @@ class MyTeacher
 
   def main
     begin
-      loop {
-        print ">"
-        input = gets.strip
+      while input = Readline.readline('>', true)
         case
         when input=="help"
           print_help
@@ -114,7 +112,7 @@ class MyTeacher
 				    puts e
 			    end
         end
-        }
+      end
     rescue	Interrupt=> e # Ctrl-C
       puts
     end
@@ -194,11 +192,15 @@ class MyTeacher
   def do_performancetestsuite
     puts "Starting strength test suite. Ctrl-C to stop it."
     f = File.open("wac.epd")
-    bad = []
+    bad  = []
+    good = []
+    total = 0
+    time  = 0
     begin
       loop do
+        break if f.eof
         line = f.readline
-        break unless line
+        next unless line != ""
         next if line[0].chr == '#'
         arr = line.split(";")
         #print '.'
@@ -207,20 +209,32 @@ class MyTeacher
         raise "oops " if arr2.size < 2
         fen   = arr2[0]
         @p.load_fen fen
-        puts fen
+        puts
+        puts "==== Problem ##{total+1}: #{fen} ===="
+        # puts "#{@side == WHITE ? "Whites":"Blacks"} to move" # FIXME: buggy
         @p.printp
-        best  = @p.algebraic_read(arr2[1])
-        puts "WAC best move = #{arr2[1]}, or #{best} (#{best.inspect}). Now playing..."
+        best_moves  = arr2[1].split(" ").map { |m| @p.algebraic_read(m)}
+        puts "Best moves are #{best_moves.join(" ")}. Now searching for them..."
+
         start = Time.now
         @s.play
+        time = Time.now-start
+        total += 1
         puts "My move is #{@s.move}"
-        if best.to_s == @s.move.to_s
-          puts "Good result !"
-        else
-          puts "BAD result ! ****************************"
-          bad << [fen, arr2[1], @s.move.to_s]
+        solution_found = nil
+        for move in best_moves
+          if move.to_s == @s.move.to_s
+            puts "Good result :)"
+            good << [fen, arr2[1], @s.move.to_s, time]
+            solution_found = true
+            break
+          end
         end
-        puts "time: #{pretty_time(Time.now-start)}"
+        if !solution_found
+          puts "BAD result :("
+          bad << [fen, arr2[1], @s.move.to_s, time]
+        end
+        puts "time: #{pretty_time(time)}"
       end
     rescue	Interrupt=> e # Ctrl-C
 	  rescue	Exception=> e
@@ -230,27 +244,34 @@ class MyTeacher
       f.close unless f.nil?
     end
     puts
-    puts "BAD moves: #{bad.size}"
+    puts "On #{total} problems, #{bad.size} were not found. Total time: #{pretty_time(bad.inject(0){|sum,i| sum+i[3]} + good.inject(0){|sum,i| sum+i[3]})}"
     for b in bad
       puts "#{b[0]} #{b[1]} but played #{b[2]}"
     end
   end
 
   def solo
-    loop {
-      #@p.reset_to_starting_position
-      loop {
-        puts "side: #{@p.side==WHITE ? "w":"b"}"
-        can_move = @s.play
-        break if not can_move
-        @s.stats.print_end_turn_stats
-        @s.stats.print_verbose_stats
-        @p.printp
-        break if @p.hply >= 300
-        }
+    begin
+      loop do
+        #@p.reset_to_starting_position
+        loop {
+          puts "side: #{@p.side==WHITE ? "w":"b"}"
+          can_move = @s.play
+          break if not can_move
+          @s.stats.print_end_turn_stats
+          @s.stats.print_verbose_stats
+          @p.printp
+          break if @p.hply >= 300
+          }
+        puts
+        puts "END"
+      end
+    rescue	Interrupt=> e # Ctrl-C
       puts
-      puts "END"
-    }
+	  rescue	Exception=> e
+		  puts e
+		  puts e.backtrace
+    end
   end
 
 end

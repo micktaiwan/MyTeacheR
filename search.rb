@@ -24,7 +24,6 @@ class Search
   def play(type=:depth_first)
     @done = nil
     @stats.start_turn
-
     # type of play depends of the function used
     # random_move, simple
     @move, @score = case type

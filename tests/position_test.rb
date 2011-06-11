@@ -6,8 +6,9 @@ include Constants
 describe Position, "(all tests)" do
 
   before(:all) do
-    @p = Position.new
-    @s = Search.new(@p)
+    @stats = Stats.new
+    @p = Position.new(@stats)
+    @s = Search.new(@p, @stats)
   end
 
   it "should be initialized with starting position" do
@@ -168,6 +169,21 @@ describe Position, "(all tests)" do
   it "should detect legal moves" do
     @p.load_fen("r3kb1r/pp2pppp/2B5/q2p1b2/3P2P1/2N2N1P/RPP2P2/3QK2R b Kkq - 0 7")
     @p.gen_moves.size.should > @p.gen_legal_moves.size
+  end
+
+  it "should read a algebraic position correctly" do
+    @p.load_fen("r1bq2rk/pp3pbp/2p1p1pQ/7P/3P4/2PB1N2/PP3PPR/2KR4 w - -")
+    m = @p.algebraic_read("Qxh7+")
+    m.to_s.should == "Qh6xh7"
+    @p.load_fen("rb3qk1/pQ3ppp/4p3/3P4/8/1P3N2/1P3PPP/3R2K1 w - -")
+    m = @p.algebraic_read("Qxa8")
+    m.to_s.should == "Qb7xa8"
+    m = @p.algebraic_read("d6")
+    m.to_s.should == "Pd5d6"
+    m = @p.algebraic_read("dxe6")
+    m.to_s.should == "Pd5xe6"
+    m = @p.algebraic_read("g3")
+    m.to_s.should == "Pg2g3"
   end
 
 end
