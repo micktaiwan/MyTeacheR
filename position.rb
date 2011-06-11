@@ -97,6 +97,10 @@ class Position
 		@hclock     == pos.hclock
 	end
 
+  def print_moves(moves)
+    puts moves_string(moves)
+  end
+
   def moves_string(moves)
     moves.map { |m| "#{SQUARENAME[m.from]}#{SQUARENAME[m.to]}" }.join(", ")
   end
@@ -147,6 +151,72 @@ class Position
     puts m.inspect
     make(m)
     @stats.end_human_turn(m) if @stats
+  end
+
+  def algebraic_read(n)
+    # castling
+    if n[0..4] == "o-o-o" or n[0..4] == "O-O-O" or n[0..4] == "0-0-0"
+      if @side == BLACK
+        return Move.new(BKING, 60, 58)
+      else
+        return Move.new(WKING, 4, 2)
+      end
+    elsif n[0..2] == "o-o" or n[0..4] == "O-O" or n[0..4] == "0-0"
+      if @side == BLACK
+        return Move.new(BKING, 60, 62)
+      else
+        return Move.new(WKING, 4, 6)
+      end
+    end
+    # check "bb" for Bishop and b file
+    n[0] = 'B' if n[0].chr=='b' and n[1].chr=='b'
+    # check "+" for checks
+    check = (n[-2].chr != '+' and n[-1].chr == "+" ? true : nil)
+    # promotions
+    state = :begin
+    i     = 0
+    file  = nil
+    piece = nil
+    s = n.size-1
+    while true
+      break if i > s
+      c = n[i].chr
+      case
+      when ['K','Q','R','B','N'].include?(c)
+        if state != :begin # promotion
+          promotion = symbol_to_piece(c)
+          state = :promotion
+        else
+          state = :piece
+          piece = symbol_to_piece(c)
+        end
+        i += 1
+      when c == 'x'
+        is_capture = true
+        state = :capture
+        i += 1
+      when( c >= 'a' and c <= 'h')
+        from_file = file if file != nil
+        file = c
+        state = :file
+        i += 1
+      when (c >= '1' and c <= '8')
+        if state == :piece
+          piece_rank = c
+        else
+          rank = c
+        end
+        state = :rank
+        i += 1
+      end
+    end
+    piece = colored_piece(PAWN, @side) if !piece
+    target = case_to_index(file+rank)
+    moves = gen_legal_moves.select { |m| m.to == target}
+    puts "algebraic read:"
+    print_moves(moves)
+    capture = piece_at(target)
+    #Move.new(piece, from, to, capture, promotion, nil, enpassant)
   end
 
   def make(move)
@@ -385,7 +455,9 @@ class Position
 	  castle  = 0
 	  i       = 0
 	  pos     = 56
+	  s = str.size - 1
 	  loop do
+	    break if i > s
 	    if str[i].chr == ' '
 	      case state
         when :pieces
@@ -446,12 +518,12 @@ class Position
           i += 1
         end
       when :enpassant
-    	  c = str[i,2]
-    	  if c == "- "
+    	  if str[i].chr == "-"
     			@bitboards[ENPASSANT] = 0
-          i += 1
+          i += 1 # to skip next blank
     	  else
-    			@bitboards[ENPASSANT] = ( 1 << case_to_index(c))
+    	    puts str[i].chr
+    			@bitboards[ENPASSANT] = ( 1 << case_to_index(str[i,2]))
           i += 2
     	  end
       when :hclock

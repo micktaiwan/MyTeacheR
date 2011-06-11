@@ -105,7 +105,7 @@ class Search
       if( score > a )
         a     = score
         best  = m
-        puts "best so far: #{m}, score: #{a}, nodes: #{@stats.current_turn_nodes}, n per s: #{@stats.nodes_per_second})" if @debug
+        puts "best so far: #{m}, score: #{a}, nodes: #{@stats.current_turn_nodes}, n/s: #{@stats.nodes_per_second}, #{pretty_time(5000.0/@stats.nodes_per_second)} for 5000 nodes" if @debug
       end
     end
     [best, a]

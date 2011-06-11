@@ -49,14 +49,16 @@ class Stats
   end
 
   def print_verbose_stats
-    puts "moves per turn:"
-    puts pretty_array(@nb_moves_per_turn, :round)
-    puts "time per turn:"
-    puts pretty_array(@time_per_turn,     :pretty_time)
     puts "n/s per turn:"
     puts pretty_array(@nodes_per_second,  :round)
     puts "score per turn:"
     puts pretty_array(@score_per_turn,    :round)
+    puts "nodes per turn:"
+    puts pretty_array(@nb_moves_per_turn, :round)
+    puts "  #{round(@nb_moves_per_turn.inject(:+) / @nb_moves_per_turn.size)} on average"
+    puts "time per turn:"
+    puts pretty_array(@time_per_turn,     :pretty_time)
+    puts "  #{pretty_time(@time_per_turn.inject(:+) / @time_per_turn.size)} on average for #{@time_per_turn.size} moves"
   end
 
   def nodes_per_second

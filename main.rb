@@ -22,9 +22,11 @@ class MyTeacher
   }
 
   def initialize
-    @stats  = Stats.new
-    @p      = Position.new(@stats)
-    @s      = Search.new(@p, @stats)
+    puts "Welcome ! Type 'help' to get... help"
+    @stats    = Stats.new
+    @p        = Position.new(@stats)
+    @s        = Search.new(@p, @stats)
+    @s.debug  = true
   end
 
   # TODO: a command to launch xboard
@@ -40,6 +42,8 @@ class MyTeacher
     puts "reset.............reset the board to initial position"
     puts "load fen <fen>....load a FEN position"
     puts "solo..............start an infinite loop, computer playing alternatively from current position"
+    puts "best on...........display best move while searching (default)"
+    puts "best off..........do not display best move while searching"
     puts
     puts "********** DEBUG AND TEST"
     puts "moves.............print all possible next moves for this position"
@@ -51,54 +55,68 @@ class MyTeacher
   end
 
   def main
-    loop {
-      print ">"
-      input = gets.strip
-      case
-      when input=="help"
-        print_help
-      when (input=="" or input=="play")
-        puts "side: #{@p.side==WHITE ? "w":"b"}"
-        start = Time.now
-        can_move = @s.play
-        puts "move: #{@s.move}, score = #{@s.score}, #{pretty_time(Time.now()-start)}"
-        @p.printp
-        puts "#{@p.side==WHITE ? "Blacks":"Whites"} win !" if !can_move
-      when input=="reset"
-        @p.reset_to_starting_position
-      when input=="unmake"
-        @p.unmake
-        @p.printp
-      when input[0..4]=="perft"
-        do_perft(input[6..-1].to_i)
-      when input=="show"
-        @p.printp
-      when input=="moves"
-        @p.gen_legal_moves.sort_by {|m| m.to_s}.each { |m|
-          puts "#{m.to_s}: #{m.inspect}"
-          }
-      when input=="solo"
-        solo
-      when input[0..3]=="test"
-        do_testsuite(input[5..-1].to_i)
-      when input[0..5]=="divide"
-        divide(input[7..-1].to_i)
-      when input[0..7]=="load fen"
-        @p.load_fen input[9..-1]
-        @p.printp
-      else # move
-			  input.gsub!(/\?/, '')
-			  begin
-				  @p.make_from_input(input)
-				  @p.change_side if color(@p.history.last[0].piece) == @p.side # this test allow to move the same color 2 times (not real chess!)
-				  @p.printp
-			  #rescue IllegalMoveException
-				#  logout "Illegal move: #{input}"
-			  rescue	Exception=> e
-				  puts e
-			  end
-      end
-      }
+    begin
+      loop {
+        print ">"
+        input = gets.strip
+        case
+        when input=="help"
+          print_help
+        when (input=="" or input=="play")
+          puts "side: #{@p.side==WHITE ? "w":"b"}"
+          start = Time.now
+          can_move = @s.play
+          puts "move: #{@s.move}, score = #{@s.score}, #{pretty_time(Time.now()-start)}"
+          @p.printp
+          puts "#{@p.side==WHITE ? "Blacks":"Whites"} win !" if !can_move
+        when input=="reset"
+          @p.reset_to_starting_position
+        when input=="unmake"
+          @p.unmake
+          @p.printp
+        when input[0..4]=="perft"
+          do_perft(input[6..-1].to_i)
+        when input[0..3]=="best"
+          if input[5..6] == "on"
+            @s.debug = true
+            puts "Best move display is now on"
+          else
+            @s.debug = nil
+            puts "Best move display is now off"
+          end
+        when input=="show"
+          @p.printp
+        when input=="moves"
+          @p.gen_legal_moves.sort_by {|m| m.to_s}.each { |m|
+            puts "#{m.to_s}: #{m.inspect}"
+            }
+        when input=="solo"
+          solo
+        when input[0..5]=="divide"
+          divide(input[7..-1].to_i)
+        when input[0..7]=="load fen"
+          @p.load_fen input[9..-1]
+          @p.printp
+        when input[0..3]=="test"
+          do_testsuite(input[5..-1].to_i)
+        when input=="ptest"
+          do_performancetestsuite
+        else # move
+			    input.gsub!(/\?/, '')
+			    begin
+				    @p.make_from_input(input)
+				    @p.change_side if color(@p.history.last[0].piece) == @p.side # this test allow to move the same color 2 times (not real chess!)
+				    @p.printp
+			    #rescue IllegalMoveException
+				  #  logout "Illegal move: #{input}"
+			    rescue	Exception=> e
+				    puts e
+			    end
+        end
+        }
+    rescue	Interrupt=> e # Ctrl-C
+      puts
+    end
   end
 
 # history of s/n
@@ -166,11 +184,54 @@ class MyTeacher
       end
 	  rescue	Exception=> e
 		  puts e
+		  puts e.backtrace
     ensure
       f.close unless f.nil?
     end
   end
 
+  def do_performancetestsuite
+    f = File.open("wac.epd")
+    bad = []
+    begin
+      loop do
+        line = f.readline
+        break unless line
+        next if line[0].chr == '#'
+        arr = line.split(";")
+        #print '.'
+        #STDOUT.flush
+        arr2 = arr[0].split(" bm ")
+        raise "oops " if arr2.size < 2
+        fen   = arr2[0]
+        @p.load_fen fen
+        puts fen
+        @p.printp
+        best  = @p.algebraic_read(arr2[1])
+        puts "WAC best move = #{arr2[1]}, or #{best} (#{best.inspect}). Now playing...."
+        start = Time.now
+        @s.play
+        puts "My move is #{@s.move}"
+        if best.to_s == @s.move.to_s
+          puts "Good result !"
+        else
+          puts "BAD result ! ****************************"
+          bad << [fen, arr2[1], @s.move.to_s]
+        end
+        puts "time: #{Time.now-start}"
+      end
+	  rescue	Exception=> e
+		  puts e
+		  puts e.backtrace
+    ensure
+      f.close unless f.nil?
+    end
+    puts
+    puts "BAD moves: #{bad.size}"
+    for b in bad
+      puts "#{b[0]} #{b[1]} but played #{b[2]}"
+    end
+  end
 
   def solo
     loop {
