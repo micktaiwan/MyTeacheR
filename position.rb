@@ -210,12 +210,18 @@ class Position
         i += 1
       end
     end
-    piece = colored_piece(PAWN, @side) if !piece
+    piece = WPAWN if !piece
     target = case_to_index(file+rank)
-    moves = gen_legal_moves.select { |m| m.to == target}
-    puts "algebraic read:"
+    if(from_file)
+      moves = gen_legal_moves.select { |m| m.to == target and piece_type(m.piece) == piece and m.from%8 == from_file-'1'}
+    else
+      moves = gen_legal_moves.select { |m| m.to == target and piece_type(m.piece) == piece}
+    end
+    print "algebraic read: "
     print_moves(moves)
-    capture = piece_at(target)
+    raise "can't read the move" if moves.size != 1
+    return moves.first
+    #capture = piece_at(target)
     #Move.new(piece, from, to, capture, promotion, nil, enpassant)
   end
 

@@ -8,6 +8,7 @@ require 'search'
 class MyTeacher
 
   include MyTeacherUtils
+
   Pre_perft = {
   1=>20,
   2=>400,
@@ -191,6 +192,7 @@ class MyTeacher
   end
 
   def do_performancetestsuite
+    puts "Starting strength test suite. Ctrl-C to stop it."
     f = File.open("wac.epd")
     bad = []
     begin
@@ -208,7 +210,7 @@ class MyTeacher
         puts fen
         @p.printp
         best  = @p.algebraic_read(arr2[1])
-        puts "WAC best move = #{arr2[1]}, or #{best} (#{best.inspect}). Now playing...."
+        puts "WAC best move = #{arr2[1]}, or #{best} (#{best.inspect}). Now playing..."
         start = Time.now
         @s.play
         puts "My move is #{@s.move}"
@@ -218,8 +220,9 @@ class MyTeacher
           puts "BAD result ! ****************************"
           bad << [fen, arr2[1], @s.move.to_s]
         end
-        puts "time: #{Time.now-start}"
+        puts "time: #{pretty_time(Time.now-start)}"
       end
+    rescue	Interrupt=> e # Ctrl-C
 	  rescue	Exception=> e
 		  puts e
 		  puts e.backtrace
@@ -253,5 +256,4 @@ class MyTeacher
 end
 
 MyTeacher.new.main
-
 
