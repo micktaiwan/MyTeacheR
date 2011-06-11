@@ -19,6 +19,9 @@ BYTE                = 0xFF
    K2  = 0xcccc0000cccc0000
    K4  = 0xf0f0f0f00f0f0f0f
 
+FullDepthMoves = 4
+ReductionLimit = 2
+
 A8 = 56; B8 = 57; C8 = 58; D8 = 59; E8 = 60; F8 = 61; G8 = 62; H8 = 63;
 A7 = 48; B7 = 49; C7 = 50; D7 = 51; E7 = 52; F7 = 53; G7 = 54; H7 = 55;
 A6 = 40; B6 = 41; C6 = 42; D6 = 43; E6 = 44; F6 = 45; G6 = 46; H6 = 47;

@@ -21,7 +21,7 @@ class Search
     @move     = nil
   end
 
-  def play(type=:depth_first)
+  def play(type=:iterative_search)
     @done = nil
     @stats.start_turn
     # type of play depends of the function used
@@ -54,44 +54,45 @@ class Search
   end
 
   def iterative_start
-    @moves = [] # store PV
-    do_iterate(0, 1)
-    #puts @moves[0].size
-    puts @moves[0].class
-    @moves[0] # return best move
+    #@moves = [] # store PV
+    depth = 1
+    while depth <= 3
+      puts "d=#{depth}"
+      move, score = iterate(-100000, 100000, depth)
+      puts "> best so far: #{move}, score: #{score}, nodes: #{@stats.current_turn_nodes}, n/s: #{@stats.nodes_per_second}, #{pretty_time(5000.0/@stats.nodes_per_second)} for 5000 nodes" if @debug
+      depth += 1
+    end
+    return [move, score]
   end
 
-  def do_iterate(depth, max_depth)
-    return if depth == max_depth
-    @moves[depth] = Array.new if not @moves[depth]
-    current_level = @moves[depth]
-    current_level = iterative_search(-100000, 100000)
-
-    current_level.each_with_index { |m,index|
-      @p.make(m[0])
-      current_level[index] = iterative_search(-100000, 100000)
-      #puts "#{current_level}, #{current_level[index].size}"
-      @p.unmake
-      }
-    do_iterate(depth+1, max_depth)
-  end
-
-  def iterative_search(a,b)
-    moves = @p.gen_legal_moves.map do |m|
+  def iterate(a, b, depth)
+    return [0,nil] if(depth == 0)
+    best = nil
+    moves = @p.gen_legal_moves
+    sort_moves!(moves)
+    for m in moves
       @stats.inc_turn_nodes
       @p.make(m)
-      score = quiesce(a,b,0)
+      score = -negamax_with_reductions(-b, -a, depth-1)
+      #puts "move: #{m}"
+      #puts "score: #{score}"
+      #@p.printp
       @p.unmake
-      [m,score]
+      #return [score, m] if( score >= b )
+      if( score > a )
+        a     = score
+        best  = m
+        puts "best so far: #{m}, score: #{a}, nodes: #{@stats.current_turn_nodes}, n/s: #{@stats.nodes_per_second}, #{pretty_time(5000.0/@stats.nodes_per_second)} for 5000 nodes" if @debug
+      end
     end
-    moves.sort_by { |m| m[1] }
+    [best, a]
   end
 
   def search_root(a,b,depth)
     return [0,nil] if(depth == 0)
     best = nil
     moves = @p.gen_legal_moves
-    #sort_moves!(moves)
+    sort_moves!(moves)
     for m in moves
       @stats.inc_turn_nodes
       @p.make(m)
@@ -119,7 +120,6 @@ class Search
     #return factor*evaluate() if(depth == 0)
     moves = @p.gen_legal_moves
     return factor*99999 if moves.size == 0
-    #sort_moves!(moves)
     for m in moves
       @stats.inc_turn_nodes
       #return factor*99999 if king_captured?(m)
@@ -130,6 +130,56 @@ class Search
       a = score if( score > a )
     end
     a
+  end
+
+  def negamax_with_reductions(a,b,depth)
+    return quiesce(a,b,0) if(depth <= 0)
+    moves = @p.gen_legal_moves
+    return factor*99999 if moves.size == 0
+    sort_moves!(moves)
+    moves_searched = 0
+    for m in moves
+      @stats.inc_turn_nodes
+      @p.make(m)
+      if(moves_searched == 0) # First move, use full-window search
+        score = -negamax_with_reductions(-b, -a, depth-1)
+      else
+        if(moves_searched >= FullDepthMoves and depth >= ReductionLimit and ok_to_reduce(m))
+          # Search this move with reduced depth
+          score = -negamax_with_reductions(-(a+1), -a, depth-2)
+        else
+          score = a+1 # Hack to ensure that full-depth search is done.
+        end
+        if(score > a)
+          # If one of the reduced moves surprise us by returning
+          # a score above alpha, the move is re-searched with full depth.
+          score = -negamax_with_reductions(-(a+1), -a, depth-1)
+          if(score > a and score < b)
+            score = -negamax_with_reductions(-b, -a, depth-1)
+          end
+        end
+      end
+      @p.unmake
+      return b if( score >= b )
+      a = score if( score > a )
+      moves_searched += 1
+    end
+    a
+  end
+
+  # Common Conditions
+  # Most programs do not reduce these types of moves:
+  # - Tactical moves (captures and promotions)
+  # - Moves while in check
+  # - Moves which give check
+  # - Moves that cause a search extension
+  # - Anytime in a PV-Node in a PVS search
+  # - Depth<3 (sometimes depth<2)
+
+  def ok_to_reduce(move)
+    return false if move.capture or move.promotion
+    #puts "reducing #{move}"
+    true
   end
 
   def quiesce(alpha, beta, depth)
@@ -145,12 +195,7 @@ class Search
     return alpha if depth >= 3 # FIXME
 
     moves = @p.gen_legal_captures
-    #puts "d=#{depth}, captures: #{moves.size}, current score=#{alpha}"
-
-    #moves = moves.map { |m| [m,see_root(m)] }
-    #moves = moves.select { |m| m[1] > 0 }
-    #moves = moves.sort_by { |m| -m[1] }
-    #moves = moves.map { |m| m[0] }
+    sort_moves!(moves)
 
     for m in moves
       #return factor*99999 if king_captured?(m)
@@ -186,7 +231,7 @@ class Search
   def sort_moves!(moves)
     moves = moves.sort_by { |m|
       @p.make(m)
-      rv = eval_material
+      rv = eval_material + eval_position
       @p.unmake
       rv
       }
