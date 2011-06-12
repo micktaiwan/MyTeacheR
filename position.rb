@@ -17,7 +17,7 @@ class Position
     @stats = stats
     @stats.p = self if @stats
     init_attacks
-		@bitboards = Array.new(LAST_BOARD_INDEX+1, 0)
+    @bitboards = Array.new(LAST_BOARD_INDEX+1, 0)
     reset_to_starting_position
   end
 
@@ -26,11 +26,11 @@ class Position
       @bitboards[i] = 0
     end
     @all_whites = @all_blacks = @all_pieces = 0
-    @side 		= WHITE
-    @ep   		= -1
-    @ply  		= @hclock = 0
-    @hply 		= 1
-    @history 	= []
+    @side     = WHITE
+    @ep       = -1
+    @ply      = @hclock = 0
+    @hply     = 1
+    @history  = []
     @stats.empty! if @stats
   end
 
@@ -63,40 +63,40 @@ class Position
     @all_pieces     = @all_whites | @all_blacks
   end
 
-	def dump
-		@bitboards[@bitboards.size] = @history
-		@bitboards[@bitboards.size] = @side
-		@bitboards[@bitboards.size] = @hply
-		@bitboards[@bitboards.size] = @ply
-		@bitboards[@bitboards.size] = @hclock
-		ret = Marshal.dump(@bitboards)
-		(1..5).each { @bitboards.delete_at(@bitboards.size-1) }
-		ret
-	end
+  def dump
+    @bitboards[@bitboards.size] = @history
+    @bitboards[@bitboards.size] = @side
+    @bitboards[@bitboards.size] = @hply
+    @bitboards[@bitboards.size] = @ply
+    @bitboards[@bitboards.size] = @hclock
+    ret = Marshal.dump(@bitboards)
+    (1..5).each { @bitboards.delete_at(@bitboards.size-1) }
+    ret
+  end
 
-	def load(dmp)
-		@bitboards  = Marshal.load( dmp)
-		@hclock     = @bitboards.pop
-		@ply        = @bitboards.pop
-		@hply       = @bitboards.pop
-		@side       = @bitboards.pop
-		@history    = @bitboards.pop
-		update_sum_boards
-		self
-	end
+  def load(dmp)
+    @bitboards  = Marshal.load( dmp)
+    @hclock     = @bitboards.pop
+    @ply        = @bitboards.pop
+    @hply       = @bitboards.pop
+    @side       = @bitboards.pop
+    @history    = @bitboards.pop
+    update_sum_boards
+    self
+  end
 
-	def ==(pos)
-	  rv = true
-	  for i in (0..LAST_BOARD_INDEX)
-	    rv = rv and @bitboards[i] == pos.bitboards[i]
-	  end
-	  rv and
-		@history    == pos.history and
-		@side       == pos.side and
-		@hply       == pos.hply and
-		@ply        == pos.ply and
-		@hclock     == pos.hclock
-	end
+  def ==(pos)
+    rv = true
+    for i in (0..LAST_BOARD_INDEX)
+      rv = rv and @bitboards[i] == pos.bitboards[i]
+    end
+    rv and
+    @history    == pos.history and
+    @side       == pos.side and
+    @hply       == pos.hply and
+    @ply        == pos.ply and
+    @hclock     == pos.hclock
+  end
 
   def print_moves(moves)
     puts moves_string(moves)
@@ -133,14 +133,18 @@ class Position
   end
 
   def move_piece(piece, from, to)
-		unset(piece, from)
+    unset(piece, from)
     set(piece, to)
   end
 
   def make_from_input(notation)
-    # TODO: test legality
     from = notation[0..1]
     to   = notation[2..3]
+    raise IllegalInput if
+      from[0] < ?a or from[0] > ?h or
+      from[1] < ?1 or from[1] > ?8 or
+      to[0] < ?a or to[0] > ?h or
+      to[1] < ?1 or to[1] > ?8
     m = Move.new
     m.piece = piece_at(case_to_index(from))
     m.set(case_to_index(from), case_to_index(to))
@@ -150,7 +154,10 @@ class Position
       raise "unknown promotion symbol '#{s}'" if not ['Q', 'R', 'B', 'N'].include?(s.upcase)
       m.promotion = colored_piece(symbol_to_piece(s.upcase), @side)
     end
-    #puts m.inspect
+    # verify legality
+    #raise IllegalMoveException if not gen_legal_moves.include?(m)
+    #puts m
+    #print_moves(gen_legal_moves)
     make(m)
     @stats.end_human_turn(m) if @stats
   end
@@ -234,68 +241,68 @@ class Position
 
     if move.capture
       unset_capture(move)
-	  else # detect captures even if not set (it is the case with xboard moves)
+    else # detect captures even if not set (it is the case with xboard moves)
       if piece_type(move.piece) == PAWN and (target = enpassant_capture_target(move))
         move.capture = colored_piece(move.piece, 1-color(move.piece)) # we found it
         pawn_case = target + (color(move.piece)==WHITE ? -8 : 8)
         unset(move.capture, pawn_case)
         move.enpassant = pawn_case
       else
-	      p = piece_at(move.to)
-	      if p # and color(p) != color(move.piece) # assumed
-  	      move.capture = p # we found it
-      	  unset(move.capture, move.to)
-      	end
-	    end
-	  end
+        p = piece_at(move.to)
+        if p # and color(p) != color(move.piece) # assumed
+          move.capture = p # we found it
+          unset(move.capture, move.to)
+        end
+      end
+    end
 
-		unset(move.piece, move.from)
-		if move.promotion
-		  set(move.promotion, move.to)
-		else
-		  set(move.piece, move.to)
-		end
+    unset(move.piece, move.from)
+    if move.promotion
+      set(move.promotion, move.to)
+    else
+      set(move.piece, move.to)
+    end
 
-		# handle castling
-		if(piece_type(move.piece) == KING and (move.to - move.from).abs == 2)
-			case move.to
-				when 62
-					move_piece(BROOK, 63, 61)
-				when 58
-					move_piece(BROOK, 56, 59)
-				when 2
-					move_piece(WROOK, 0, 3)
-				when 6
-					move_piece(WROOK, 7, 5)
-			end
-		end
+    # handle castling
+    if(piece_type(move.piece) == KING and (move.to - move.from).abs == 2)
+      case move.to
+        when 62
+          move_piece(BROOK, 63, 61)
+        when 58
+          move_piece(BROOK, 56, 59)
+        when 2
+          move_piece(WROOK, 0, 3)
+        when 6
+          move_piece(WROOK, 7, 5)
+      end
+    end
 
-		# mark no-longer-possible castles
-		move.can_castle = @bitboards[CAN_CASTLE] # backup
-		# take care of current side castling rights
-		if move.piece == BKING
-			@bitboards[CAN_CASTLE] &= ~(4|8)
-		elsif (move.piece == BROOK and move.from == 56)
-			@bitboards[CAN_CASTLE] &= ~(4)
-		elsif (move.piece == BROOK and move.from == 63)
-			@bitboards[CAN_CASTLE] &= ~(8)
-		elsif move.piece == WKING
-			@bitboards[CAN_CASTLE] &= ~(1|2)
-		elsif (move.piece == WROOK and move.from == 0)
-			@bitboards[CAN_CASTLE] &= ~(1)
-		elsif (move.piece == WROOK and move.from == 7)
-			@bitboards[CAN_CASTLE] &= ~(2)
-		end
-		# take of other side
-		if move.capture == BROOK and move.to == 56
-			@bitboards[CAN_CASTLE] &= ~(4)
-		elsif move.capture == BROOK and move.to == 63
-			@bitboards[CAN_CASTLE] &= ~(8)
-		elsif move.capture == WROOK and move.to == 0
-			@bitboards[CAN_CASTLE] &= ~(1)
-		elsif move.capture == WROOK and move.to == 7
-			@bitboards[CAN_CASTLE] &= ~(2)
-		end
+    # mark no-longer-possible castles
+    move.can_castle = @bitboards[CAN_CASTLE] # backup
+    # take care of current side castling rights
+    if move.piece == BKING
+      @bitboards[CAN_CASTLE] &= ~(4|8)
+    elsif (move.piece == BROOK and move.from == 56)
+      @bitboards[CAN_CASTLE] &= ~(4)
+    elsif (move.piece == BROOK and move.from == 63)
+      @bitboards[CAN_CASTLE] &= ~(8)
+    elsif move.piece == WKING
+      @bitboards[CAN_CASTLE] &= ~(1|2)
+    elsif (move.piece == WROOK and move.from == 0)
+      @bitboards[CAN_CASTLE] &= ~(1)
+    elsif (move.piece == WROOK and move.from == 7)
+      @bitboards[CAN_CASTLE] &= ~(2)
+    end
+    # take of other side
+    if move.capture == BROOK and move.to == 56
+      @bitboards[CAN_CASTLE] &= ~(4)
+    elsif move.capture == BROOK and move.to == 63
+      @bitboards[CAN_CASTLE] &= ~(8)
+    elsif move.capture == WROOK and move.to == 0
+      @bitboards[CAN_CASTLE] &= ~(1)
+    elsif move.capture == WROOK and move.to == 7
+      @bitboards[CAN_CASTLE] &= ~(2)
+    end
 
     if piece_type(move.piece) != PAWN and !move.capture
       @hclock += 1
@@ -303,80 +310,80 @@ class Position
       @hclock = 0
     end
     @history << [move, @hclock]
-		mark_enpassant(move)
+    mark_enpassant(move)
     increment_ply
     change_side
   end
 
   def unmake
-		move, = @history.pop
-		raise "unmake but no move in history" unless move
+    move, = @history.pop
+    raise "unmake but no move in history" unless move
 
-		if(move.promotion)
-		  unset(move.promotion, move.to)
-		else
-		  unset(move.piece, move.to)
-	  end
-		set(move.piece, move.from)
+    if(move.promotion)
+      unset(move.promotion, move.to)
+    else
+      unset(move.piece, move.to)
+    end
+    set(move.piece, move.from)
 
     if(move.capture)
       if move.enpassant
-	      set(move.capture, move.enpassant)
+        set(move.capture, move.enpassant)
       else
-	      set(move.capture, move.to)
-	    end
-		end
+        set(move.capture, move.to)
+      end
+    end
 
-		# handle castling
-		@bitboards[CAN_CASTLE] = move.can_castle
-		# are we castling?
-		if(piece_type(move.piece) == KING and (move.to - move.from).abs == 2)
-			case move.to
-				when 62
-					move_piece(BROOK, 61, 63)
-				when 58
-					move_piece(BROOK, 59, 56)
-				when 2
-					move_piece(WROOK, 3, 0)
-				when 6
-					move_piece(WROOK, 5, 7)
-			end
-		end
+    # handle castling
+    @bitboards[CAN_CASTLE] = move.can_castle
+    # are we castling?
+    if(piece_type(move.piece) == KING and (move.to - move.from).abs == 2)
+      case move.to
+        when 62
+          move_piece(BROOK, 61, 63)
+        when 58
+          move_piece(BROOK, 59, 56)
+        when 2
+          move_piece(WROOK, 3, 0)
+        when 6
+          move_piece(WROOK, 5, 7)
+      end
+    end
 
-		if last = @history.last
-			mark_enpassant(last[0])
-    	@hclock = last[1]
-		else
-			mark_enpassant(nil)
-    	@hclock = 0
-		end
+    if last = @history.last
+      mark_enpassant(last[0])
+      @hclock = last[1]
+    else
+      mark_enpassant(nil)
+      @hclock = 0
+    end
     increment_ply(-1)
-		change_side
-	end
+    change_side
+  end
 
-	def make_null_move
-		change_side
-	end
+  def make_null_move
+    change_side
+  end
 
-	def unmake_null_move
-		change_side
-	end
+  def unmake_null_move
+    change_side
+  end
 
-	def set(piece, *indexes)
-		indexes.each do |i|
-  		pos = (1 << i)
+  def set(piece, *indexes)
+    indexes.each do |i|
+      pos = (1 << i)
       @bitboards[piece] |= pos
-		end
+    end
     update_sum_boards
-	end
+  end
 
-	def unset(piece, *indexes)
-		indexes.each do |i|
-			pos = ~(1 << i)
-			@bitboards[piece] &= pos
-		end
+  def unset(piece, *indexes)
+    indexes.each do |i|
+      pos = ~(1 << i)
+      @bitboards[piece] &= pos
+    end
     update_sum_boards
-	end
+  end
 
   def enpassant_capture_target(move)
     return nil if @bitboards[ENPASSANT] == 0
@@ -391,41 +398,41 @@ class Position
     if (target = enpassant_capture_target(move))
       pawn_case = target + (color(move.piece)==WHITE ? -8 : 8)
       unset(move.capture, pawn_case)
- 			move.enpassant = pawn_case
+      move.enpassant = pawn_case
     else
       unset(move.capture, move.to)
     end
   end
 
-	def mark_enpassant(move)
-	  if !move
-			@bitboards[ENPASSANT] = 0
-	    return
-	  end
-		if move.piece == BPAWN and move.from > 47 and move.from < 56 and (move.from - move.to).abs == 16
-			@bitboards[ENPASSANT] = ( 1 << (move.from-8))
-		elsif move.piece == WPAWN and move.from > 7 and move.from < 16 and (move.from - move.to).abs == 16
-			@bitboards[ENPASSANT] = ( 1 << (move.from+8))
-		else
-			@bitboards[ENPASSANT] = 0
-		end
-	end
+  def mark_enpassant(move)
+    if !move
+      @bitboards[ENPASSANT] = 0
+      return
+    end
+    if move.piece == BPAWN and move.from > 47 and move.from < 56 and (move.from - move.to).abs == 16
+      @bitboards[ENPASSANT] = ( 1 << (move.from-8))
+    elsif move.piece == WPAWN and move.from > 7 and move.from < 16 and (move.from - move.to).abs == 16
+      @bitboards[ENPASSANT] = ( 1 << (move.from+8))
+    else
+      @bitboards[ENPASSANT] = 0
+    end
+  end
 
-	def piece_at(index)
-		bit = (1 << index)
-		if @all_pieces & bit > 0
-  		if @all_whites & bit > 0
-  		  for piece in KING..PAWN
-    			return piece if (@bitboards[piece] & bit) > 0
-    	  end
-  		elsif @all_blacks & bit > 0
-  		  for piece in BKING..BPAWN
-    			return piece if (@bitboards[piece] & bit) > 0
-    		end
-  		end
-		end
-		return nil
-	end
+  def piece_at(index)
+    bit = (1 << index)
+    if @all_pieces & bit > 0
+      if @all_whites & bit > 0
+        for piece in KING..PAWN
+          return piece if (@bitboards[piece] & bit) > 0
+        end
+      elsif @all_blacks & bit > 0
+        for piece in BKING..BPAWN
+          return piece if (@bitboards[piece] & bit) > 0
+        end
+      end
+    end
+    return nil
+  end
 
   def bitScanForward(bb)
    raise "empty bb" if (bb == 0)
@@ -433,21 +440,21 @@ class Position
    rv
   end
 
-	# give indexes of all ones in the bitboard
-	def indexes(bb)
-		# (0..63).select {|i| ((1 << i) & bb) != 0} # gained 50% of time !
-	  return [] if bb==0
-	  rv = []
-	  begin
+  # give indexes of all ones in the bitboard
+  def indexes(bb)
+    # (0..63).select {|i| ((1 << i) & bb) != 0} # gained 50% of time !
+    return [] if bb==0
+    rv = []
+    begin
       rv << bitScanForward(bb) # square index from 0..63
       bb &= bb-1 # reset LS1B
     end while (bb != 0)
     rv
-	end
+  end
 
-	def can_castle(side, castle_side)
-		@bitboards[CAN_CASTLE] & (1 << ((side * 2)+castle_side)) > 0
-	end
+  def can_castle(side, castle_side)
+    @bitboards[CAN_CASTLE] & (1 << ((side * 2)+castle_side)) > 0
+  end
 
   # return the number of piece in this position
   def num_pieces(piece)
@@ -463,38 +470,38 @@ class Position
     count
   end
 
-	# Load Forsyth-Edwards Notation (FEN)
-	def load_fen(str)
-	  empty!
-	  state   = :pieces
-	  castle  = 0
-	  i       = 0
-	  pos     = 56
-	  s = str.size - 1
-	  loop do
-	    break if i > s
-	    if str[i].chr == ' '
-	      case state
+  # Load Forsyth-Edwards Notation (FEN)
+  def load_fen(str)
+    empty!
+    state   = :pieces
+    castle  = 0
+    i       = 0
+    pos     = 56
+    s = str.size - 1
+    loop do
+      break if i > s
+      if str[i].chr == ' '
+        case state
         when :pieces
           state = :side
         when :side
           state = :castle
         when :castle
-    	    state = :enpassant
+          state = :enpassant
         when :enpassant
-    	    state = :hclock
+          state = :hclock
         when :hclock
-    	    state = :ply
-    	  else
-    	    raise "unknown state i==#{i}"
-    	  end
+          state = :ply
+        else
+          raise "unknown state i==#{i}"
+        end
         i += 1
-    	end
+      end
 
-    	case state
-	    when :pieces
-	      c = str[i]
-	      case
+      case state
+      when :pieces
+        c = str[i]
+        case
         when c.chr == '/'
           i += 1
           pos -= 8*2
@@ -533,33 +540,33 @@ class Position
           i += 1
         end
       when :enpassant
-    	  if str[i].chr == "-"
-    			@bitboards[ENPASSANT] = 0
+        if str[i].chr == "-"
+          @bitboards[ENPASSANT] = 0
           i += 1 # to skip next blank
-    	  else
-    	    #puts str[i].chr
-    			@bitboards[ENPASSANT] = ( 1 << case_to_index(str[i,2]))
+        else
+          #puts str[i].chr
+          @bitboards[ENPASSANT] = ( 1 << case_to_index(str[i,2]))
           i += 2
-    	  end
+        end
       when :hclock
-    	  @hclock = str[i,2].scan(/\d+/)[0].to_i
+        @hclock = str[i,2].scan(/\d+/)[0].to_i
         i += @hclock.to_s.size
-    	when :ply
-    	  @hply = str[i,3].scan(/\d+/)[0].to_i
-    	  @ply = ((@hply-1) * 2) + ((@side == BLACK)? 1 : 0)
-    	  break
-    	else
+      when :ply
+        @hply = str[i,3].scan(/\d+/)[0].to_i
+        @ply = ((@hply-1) * 2) + ((@side == BLACK)? 1 : 0)
+        break
+      else
         raise "can not read this FEN position #{str}"
-    	end
+      end
     end
     update_sum_boards
     @bitboards[CAN_CASTLE] = castle
     self
-	end
+  end
 
-	def change_side
-	  @side = 1-@side
-	end
+  def change_side
+    @side = 1-@side
+  end
 
   def get_smallest_attacker(square, side)
     moves = get_attackers(square, side)

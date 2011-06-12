@@ -62,7 +62,7 @@ module MyTeacherUtils
     hour = (min.to_f / 60).floor
     "#{hour}h#{min-hour*60}m#{two_digits(round(secs-min*60,1))}"
   end
-  
+
   def two_digits(n)
     if n.to_i.to_s.size < 2
       "0"+n.to_s

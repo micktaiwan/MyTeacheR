@@ -7,34 +7,35 @@ require 'readline'
 
 class MyTeacher
 
+  ProgramVersion = "MyTeacheR - v0.1 - 12 June 2011"
   include MyTeacherUtils
 
   Pre_perft = {
-  1=>20,
-  2=>400,
-  3=>8902,
-  4=>197281,
-  5=>4865609,
-  6=>119060324,
-  7=>3195901860,
-  8=>84998978956,
-  9=>2439530234167,
-  10=>69352859712417
-  }
+    1=>20,
+    2=>400,
+    3=>8902,
+    4=>197281,
+    5=>4865609,
+    6=>119060324,
+    7=>3195901860,
+    8=>84998978956,
+    9=>2439530234167,
+    10=>69352859712417
+    }
 
-  LIST = [
+  CLIST = [
     'play', 'unmake', 'show', 'help',
     'reset', 'load fen ', 'solo', 'quit', 'exit',
     'best on', 'best off', 'moves',
-    'perft ', 'divide ', 'test ', 'ptest'
+    'perft ', 'divide ', 'test ', 'ptest', 'xboard'
     ].sort
 
   def initialize
-    puts "Welcome !\nType 'help' to get... help.\nPress TAB for autocompletion."
+    puts "Welcome to #{ProgramVersion} !\nType 'help' to get... help.\nPress TAB for autocompletion."
     @stats    = Stats.new
     @p        = Position.new(@stats)
     @s        = Search.new(@p, @stats)
-    #@s.debug  = true
+    @s.debug  = true
   end
 
   # TODO: a command to launch xboard
@@ -42,9 +43,10 @@ class MyTeacher
     puts
     puts "********* PLAY"
     puts "e2e4..............play a move"
-    puts "play..............forces computer to play this position"
+    puts "play/[Enter]......forces computer to play this position"
     puts "unmake............back up one move"
     puts "show..............print the board"
+    puts "xboard............launch a graphical interface (if xboard is installed)"
     puts
     puts "********* UTILS"
     puts "quit/exit.........exit program"
@@ -54,7 +56,7 @@ class MyTeacher
     puts "best on...........display best move while searching (default)"
     puts "best off..........do not display best move while searching"
     puts
-    puts "********** DEBUG AND TEST"
+    puts "********* DEBUG AND TEST"
     puts "moves.............print all possible next moves for this position"
     puts "perft <n>.........display Perft(n)"
     puts "divide <n>........display Divide(n)"
@@ -64,76 +66,91 @@ class MyTeacher
   end
 
   def main
-      comp = proc { |s| LIST.grep( /^#{Regexp.escape(s)}/ ) }
-      Readline.completion_append_character = ""
-      Readline.completion_proc = comp
-      while input = Readline.readline('>', true) # TODO: autocompletion ! http://bogojoker.com/readline/
-	begin
-	  case
-	  when (input=="quit" or input=="exit")
-	    exit
-	  when input=="help"
-	    print_help
-	  when (input=="" or input=="play")
-	    puts "side: #{@p.side==WHITE ? "w":"b"}"
-	    start = Time.now
-	    can_move = @s.play
-	    puts "move: #{@s.move}, score = #{@s.score}, #{pretty_time(Time.now()-start)}"
-	    @p.printp
-	    puts "#{@p.side==WHITE ? "Blacks":"Whites"} win !" if !can_move
-	  when input=="reset"
-	    @p.reset_to_starting_position
-	    @p.printp
-	  when input=="unmake"
-	    @p.unmake
-	    @p.printp
-	  when input[0..4]=="perft"
-	    do_perft(input[6..-1].to_i)
-	  when input[0..3]=="best"
-	    if input[5..6] == "on"
-	      @s.debug = true
-	      puts "Best move display is now on"
-	    else
-	      @s.debug = nil
-	      puts "Best move display is now off"
-	    end
-	  when input=="show"
-	    @p.printp
-	  when input=="moves"
-	    @p.gen_legal_moves.sort_by {|m| m.to_s}.each { |m|
-	      puts "#{m.to_s}: #{m.inspect}"
-	      }
-	  when input=="solo"
-	    solo
-	  when input[0..5]=="divide"
-	    divide(input[7..-1].to_i)
-	  when input[0..7]=="load fen"
-	    @p.load_fen input[9..-1]
-	    @p.printp
-	  when input[0..3]=="test"
-	    do_testsuite(input[5..-1].to_i)
-	  when input=="ptest"
-	    do_performancetestsuite
-	  else # move
-			      input.gsub!(/\?/, '')
-			      begin
-				      @p.make_from_input(input)
-				      @p.change_side if color(@p.history.last[0].piece) == @p.side # this test allow to move the same color 2 times (not real chess!)
-				      @p.printp
-			      #rescue IllegalMoveException
-				    #  logout "Illegal move: #{input}"
-			      rescue	Exception=> e
-				      puts e
-		    puts e.backtrace
-			      end
-	  end
-	rescue	Interrupt=> e # Ctrl-C
-	  puts
-	rescue	Exception=> e
-	  puts e
-	  puts e.backtrace
-	end
+    comp = proc { |s| CLIST.grep( /^#{Regexp.escape(s)}/ ) }
+    Readline.completion_append_character = ""
+    Readline.completion_proc = comp
+    begin
+      while input = Readline.readline('>', true)
+        begin
+          @dump = @p.dump # in case of fired Exception
+          case
+          when (input=="quit" or input=="exit")
+            exit
+          when input=="help"
+            print_help
+          when (input=="" or input=="play")
+            puts "side: #{@p.side==WHITE ? "w":"b"}"
+            start = Time.now
+            can_move = @s.play
+            puts "move: #{@s.move}, score = #{@s.score}, #{pretty_time(Time.now()-start)}"
+            @p.printp
+            puts "#{@p.side==WHITE ? "Blacks":"Whites"} win !" if !can_move
+          when input=="reset"
+            @p.reset_to_starting_position
+            @p.printp
+          when input=="unmake"
+            @p.unmake
+            @p.printp
+          when input[0..4]=="perft"
+            do_perft(input[6..-1].to_i)
+          when input[0..3]=="best"
+            if input[5..6] == "on"
+              @s.debug = true
+              puts "Best move display is now on"
+            else
+              @s.debug = nil
+              puts "Best move display is now off"
+            end
+          when input=="show"
+            @p.printp
+          when input=="moves"
+            @p.gen_legal_moves.sort_by {|m| m.to_s}.each do |m|
+              puts "#{m.to_s}: #{m.inspect}"
+            end
+          when input=="solo"
+            solo
+          when input[0..5]=="divide"
+            divide(input[7..-1].to_i)
+          when input[0..7]=="load fen"
+            @p.load_fen input[9..-1]
+            @p.printp
+          when input[0..3]=="test"
+            do_testsuite(input[5..-1].to_i)
+          when input=="ptest"
+            do_performancetestsuite
+          when input=="xboard"
+            `xboard -fcp "./xboard.rb" -debug -size Medium`
+          else # move
+            input.gsub!(/\?/, '')
+            begin
+              puts "test"
+              @p.make_from_input(input)
+              @p.change_side if color(@p.history.last[0].piece) == @p.side # this test allow to move the same color 2 times (not real chess!)
+              @p.printp
+            rescue IllegalInput
+              puts "Illegal input: #{input}"
+            rescue IllegalMoveException
+              puts "Illegal move: #{input}"
+            rescue    Exception=> e
+              puts e
+              puts e.backtrace
+              @p.load(@dump)
+            end
+          end
+        # inner loop
+        rescue  Exception=> e
+          puts e
+          puts e.backtrace
+          @p.load(@dump)
+        end
       end
+    # outer loop
+    rescue  Interrupt=> e # Ctrl-C
+      puts
+    rescue  Exception=> e
+      puts e
+      puts e.backtrace
+    end
   end
 
 # history of s/n
@@ -200,9 +217,9 @@ class MyTeacher
           puts "BAD: #{result} != #{d[1]}"
         end
       end
-	  rescue	Exception=> e
-		  puts e
-		  puts e.backtrace
+    rescue Exception=> e
+      puts e
+      puts e.backtrace
     ensure
       f.close unless f.nil?
     end
@@ -257,12 +274,12 @@ class MyTeacher
         puts "time: #{pretty_time(time)}"
         puts "On #{total} problems, #{bad.size} (#{round(bad.size*100/total)}%) were not found. Total time: #{pretty_time(bad.inject(0){|sum,i| sum+i[3]} + good.inject(0){|sum,i| sum+i[3]})}"
       end
-    rescue	Interrupt=> e # Ctrl-C
+    rescue      Interrupt=> e # Ctrl-C
       puts
       puts "On #{total} problems, #{bad.size} (#{round(bad.size*100/total)}%) were not found. Total time: #{pretty_time(bad.inject(0){|sum,i| sum+i[3]} + good.inject(0){|sum,i| sum+i[3]})}"
-	  rescue	Exception=> e
-		  puts e
-		  puts e.backtrace
+    rescue Exception=> e
+      puts e
+      puts e.backtrace
     ensure
       f.close unless f.nil?
     end
@@ -276,6 +293,7 @@ class MyTeacher
       loop do
         #@p.reset_to_starting_position
         loop {
+          @dump = @p.dump
           puts "side: #{@p.side==WHITE ? "w":"b"}"
           can_move = @s.play
           break if not can_move
@@ -287,15 +305,16 @@ class MyTeacher
         puts
         puts "END"
       end
-    rescue	Interrupt=> e # Ctrl-C
+    rescue      Interrupt=> e # Ctrl-C
       puts
-	  rescue	Exception=> e
-		  puts e
-		  puts e.backtrace
+    rescue        Exception=> e
+      puts e
+      puts e.backtrace
+    ensure
+      @p.load(@dump)
     end
   end
 
 end
 
 MyTeacher.new.main
-

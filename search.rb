@@ -2,9 +2,6 @@ require 'position'
 require 'eval'
 require 'stats'
 
-class IllegalMoveException < RuntimeError
-end
-
 class Search
 
   include Constants
@@ -27,7 +24,6 @@ class Search
     @stats.reset_special(:see)
     @stats.start_turn
     # type of play depends of the function used
-    # random_move, simple
     @move, @score = case type
       when :iterative_search
         iterative_start
@@ -78,9 +74,6 @@ class Search
       @stats.inc_turn_nodes
       @p.make(m)
       score = -negamax_with_reductions(-b, -a, depth-1)
-      #puts "move: #{m}"
-      #puts "score: #{score}"
-      #@p.printp
       @p.unmake
       #return [score, m] if( score >= b )
       if( score > a )
@@ -138,7 +131,7 @@ class Search
 
   def negamax_with_reductions(a,b,depth)
     return quiesce(a,b,0) if(depth <= 0)
-    
+
     # Null move reduction
     if (null_move_allowed?)
       @null_move = true
@@ -152,8 +145,8 @@ class Search
       end
     else
       @null_move = false
-    end    
-    
+    end
+
     moves = @p.gen_legal_moves
     return factor*99999 if moves.size == 0
     sort_moves!(moves)
@@ -189,10 +182,10 @@ class Search
   end
 
   def null_move_allowed?
-		index = @p.indexes(@p.bitboards[colored_piece(KING, @side)]).first
+    index = @p.indexes(@p.bitboards[colored_piece(KING, @side)]).first
     !@p.in_check?(index,@p.side) and !@null_move
   end
-  
+
   # Common Conditions
   # Most programs do not reduce these types of moves:
   # - Tactical moves (captures and promotions)
@@ -202,7 +195,7 @@ class Search
   # - Anytime in a PV-Node in a PVS search
   # - Depth<3 (sometimes depth<2)
   def ok_to_reduce?(move)
-		index = @p.indexes(@p.bitboards[colored_piece(KING, @side)]).first
+    index = @p.indexes(@p.bitboards[colored_piece(KING, @side)]).first
     return false if move.capture or move.promotion or @p.in_check?(index,@p.side)
     #puts "reducing #{move}"
     true
@@ -223,7 +216,7 @@ class Search
     #sort_moves!(moves)
     for m in @p.gen_legal_captures
       #return factor*99999 if king_captured?(m)
-      
+
       if @debug
         n = false
         @stats.start_special(:see)
@@ -232,7 +225,7 @@ class Search
         next if n
       else
         next if see_root(m) < 0
-      end  
+      end
       @p.make(m)
       score = -quiesce( -beta, -alpha, depth+1 )
       @p.unmake
@@ -270,11 +263,11 @@ class Search
       }
   end
 
-  def king_captured?(m)
-    return true if m.capture == WKING
-    return true if m.capture == BKING
-    false
-  end
+  #def king_captured?(m)
+  #  return true if m.capture == WKING
+  #  return true if m.capture == BKING
+  #  false
+  #end
 
 end
 

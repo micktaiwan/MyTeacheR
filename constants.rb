@@ -1,3 +1,9 @@
+class IllegalMoveException < RuntimeError
+end
+class IllegalInput < RuntimeError
+end
+
+
 module Constants
 
 WHITE, BLACK = 0, 1

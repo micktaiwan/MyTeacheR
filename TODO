@@ -30,13 +30,13 @@ Other
 
 Current detailled TODO list:
 
-- WAC test suite
-- display current best move in solo
-- Iterative deepening and move ordering to be able to limit search time
-- Finish Quiescence search (do not evaluate all the moves)
-- for legal moves, use the reverse piece king taking idea
+- Started: Iterative deepening and move ordering to be able to search deeper
+  - Hash table
+- Do not prune until depth > 3 to find WAC#1 ? impossible....
+- Finish LMR
+- opening book
 - Idea: For legal moves, do not check it up-front, but wait until the move is detected as a good move (not pruned) and then verify if it is legal.
-- Started: Improve performance of legal move gen: moves generation really using bitboard (and premove tables ?)
+- Started: moves generation really using bitboard (and premove tables ?)
 - Setup a match routine between different versions of MyTeacher to see ELO improvements ! :)
 
 The speed of move generator is not very important.
