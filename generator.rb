@@ -34,6 +34,53 @@ class Position
 
 # private
 
+  def knight_check?(index, side)
+    other_color = (side == WHITE ? @bitboards[BKNIGHT] : @bitboards[WKNIGHT])
+    return true if indexes(@knight_attacks[index] & other_color).first
+    false
+  end
+
+  def rook_check?(index, side)
+    other_color = (side == WHITE ? (@bitboards[BROOK] | @bitboards[BQUEEN]) : (@bitboards[WROOK] | @bitboards[WQUEEN]))
+    return true if indexes(rook_moves(index) & other_color).first
+    return false
+  end
+
+  def bishop_check?(index, side)
+    for inc in [-9,-7,7,9]
+      limit = 7
+      target = index + inc
+      rank = target / 8
+      lastrank = index / 8
+      while limit > 0 and target >= 0 and target <= 63 and
+            (lastrank - rank).abs == 1 do
+        capture = piece_at(target)
+        if capture
+          if side != color(capture)
+            pt = piece_type(capture)
+            if pt == BISHOP or pt == QUEEN
+              return true
+            else
+              break
+            end
+          else
+            break
+          end
+        end
+        lastrank  = rank
+        target   += inc
+        rank      = target / 8
+        limit    -= 1
+      end
+    end
+    return false
+  end
+
+  def queens_check?(index, side)
+  	return true if rook_check?(index, side) or bishop_check?(index, side)
+  	false
+  end
+
   def gen_knights_moves(side)
     moves = []
     other_color_or_empty = (side == WHITE ? ~@all_whites : ~@all_blacks)
@@ -147,6 +194,17 @@ class Position
 			moves += gen_bishop_type_moves(side, r, QUEEN)
 		end
 		moves
+	end
+
+	def pawn_check?(index, side)
+	  if(side == WHITE)
+	    return true if(index % 8 != 0 and index+7 < 63 and piece_at(index+7) == BPAWN) or
+	                  (index % 8 != 7 and index+9 < 63 and piece_at(index+9) == BPAWN)
+	  else
+	    return true if(index % 8 != 7 and index-7 > 0 and piece_at(index-7) == WPAWN) or
+	                  (index % 8 != 0 and index-9 > 0 and piece_at(index-9) == WPAWN)
+	  end
+	  return false
 	end
 
 	def gen_pawns_moves(side)
@@ -268,24 +326,42 @@ class Position
 		kpiece = colored_piece(KING,side)
 		moves.select do |m|
 			make(m)
-			next_moves = gen_moves(1-side) # TODO: replace by the "reverse the perspective" method
-			king = indexes(@bitboards[kpiece]).first
-			select_ret = true
-			for m in next_moves
-				if m.to == king
-				  #puts "king captured! #{m} #{m.inspect}"
-					select_ret = false
-					break
-				end
-			end
+      king = indexes(@bitboards[kpiece]).first
+      if in_check?(king,side)
+        rv = false
+      else
+        rv = true
+      end
+
+			#next_moves = gen_moves(1-side) # TODO: replace by the "reverse the perspective" method
+			#king = indexes(@bitboards[kpiece]).first
+			#select_ret = true
+			#for m in next_moves
+			#	if m.to == king
+			#	  #puts "king captured! #{m} #{m.inspect}"
+			#		select_ret = false
+			#		break
+			#	end
+			#end
+
 			unmake
-			select_ret
+			rv
 		end
+	end
+
+	def king_check?(index, side)
+		return true if indexes(@king_attacks[index] & (side == WHITE ? @bitboards[BKING] : @bitboards[WKING])).first
+		return false
+	end
+
+	def in_check?(index, side)
+	  return true if queens_check?(index, side) or knight_check?(index, side) or pawn_check?(index, side) or king_check?(index, side)
+	  return false
 	end
 
 	def gen_king_moves(side)
 		king_i = indexes(@bitboards[colored_piece(KING, side)]).first
-		raise "No king ???" if !king_i
+		#raise "No king ???" if !king_i
 		moves = []
 		for target in indexes(@king_attacks[king_i] & (side == WHITE ? ~@all_whites : ~@all_blacks))
       moves << Move.new(colored_piece(KING, side), king_i, target, piece_at(target))

@@ -105,6 +105,7 @@ class Position
     moves.map { |m| m.to_s }.join(", ")
   end
 
+  # TODO: also print FEN
   def printp
     i = 0
     [56,48,40,32,24,16,8,0].each do |i|

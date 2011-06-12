@@ -126,6 +126,8 @@ class MyTeacher
       end
     rescue	Interrupt=> e # Ctrl-C
       puts
+    rescue	Exception=> e
+	    puts e
     end
   end
 
@@ -177,8 +179,9 @@ class MyTeacher
     f = File.open("perftsuite.epd")
     begin
       loop do
+        break if f.eof
         line = f.readline
-        break unless line
+        break unless line != ""
         next if line[0].chr == '#'
         arr = line.split(";")
         print '.'
@@ -198,6 +201,7 @@ class MyTeacher
     ensure
       f.close unless f.nil?
     end
+    puts
   end
 
   def do_performancetestsuite
@@ -246,16 +250,17 @@ class MyTeacher
           bad << [fen, arr2[1], @s.move.to_s, time]
         end
         puts "time: #{pretty_time(time)}"
+        puts "On #{total} problems, #{bad.size} (#{round(bad.size*100/total)}%) were not found. Total time: #{pretty_time(bad.inject(0){|sum,i| sum+i[3]} + good.inject(0){|sum,i| sum+i[3]})}"
       end
     rescue	Interrupt=> e # Ctrl-C
+      puts
+      puts "On #{total} problems, #{bad.size} (#{round(bad.size*100/total)}%) were not found. Total time: #{pretty_time(bad.inject(0){|sum,i| sum+i[3]} + good.inject(0){|sum,i| sum+i[3]})}"
 	  rescue	Exception=> e
 		  puts e
 		  puts e.backtrace
     ensure
       f.close unless f.nil?
     end
-    puts
-    puts "On #{total} problems, #{bad.size} were not found. Total time: #{pretty_time(bad.inject(0){|sum,i| sum+i[3]} + good.inject(0){|sum,i| sum+i[3]})}"
     for b in bad
       puts "#{b[0]} #{b[1]} but played #{b[2]}"
     end

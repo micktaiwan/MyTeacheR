@@ -29,12 +29,13 @@ def play p, s
 	if not move
 		puts "RESULT 1-0 {White Mates}"
 	end
-	logout "move #{move}"
+	logout "move #{move.to_s(:xboard)}"
 	move
 end
 
-p = Position.new
-s = Search.new(p)
+st = Stats.new
+p  = Position.new(st)
+s  = Search.new(p,st)
 $stdin.each do |move|
 	move.strip!
 	$stderr.print "In :#{move}\n"

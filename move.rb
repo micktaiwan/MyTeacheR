@@ -20,8 +20,13 @@ class Move
     @from, @to = from, to
   end
 
-  def to_s # FIXME: promotion can be upcase or downcase, is it a good notation principle ?
-    "#{piece_to_symbol(@piece)}#{SQUARENAME[@from]}#{@capture == nil ? "":"x"}#{SQUARENAME[@to]}#{@promotion ? SYMBOLS[@promotion] : ""}"
+  def to_s(notation=:legible) # FIXME: promotion can be upcase or downcase, is it a good notation principle ?
+    case notation
+    when :legible
+    "#{piece_to_symbol(@piece)}#{SQUARENAME[@from]}#{@capture == nil ? "":"x"}#{SQUARENAME[@to]}#{@promotion ? SYMBOLS[@promotion].upcase : ""}"
+    when :xboard
+    "#{SQUARENAME[@from]}#{SQUARENAME[@to]}#{@promotion ? SYMBOLS[@promotion].upcase : ""}"
+    end
   end
 
   #"#{m.to_s}: capture=#{m.capture.to_s}, promotion=#{m.promotion.to_s}"

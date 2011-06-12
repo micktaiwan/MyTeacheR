@@ -54,6 +54,8 @@ class Search
   end
 
   def iterative_start
+    return iterate(-100000, 100000, 3)
+
     #@moves = [] # store PV
     depth = 1
     while depth <= 3
