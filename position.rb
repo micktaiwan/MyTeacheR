@@ -562,11 +562,13 @@ class Position
 	end
 
   def get_smallest_attacker(square, side)
-    moves = gen_legal_moves(side) # I've chosen a simple method :)
-    moves = moves.select { |m| m.to == square }
+    moves = get_attackers(square, side)
     return [nil, nil] if moves.size == 0
-    moves.sort_by { |m| piece_value(m.piece) }
-    [moves[0].piece, moves[0].from]
+    moves = moves.sort_by  { |m| piece_value(m[0]) }
+    #puts moves.map { |m| piece_to_symbol(m[0])}.join(", ")
+    #puts
+    #puts moves[0][0], moves[0][1]
+    [moves[0][0], moves[0][1]]
   end
 
 end

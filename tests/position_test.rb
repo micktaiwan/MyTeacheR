@@ -185,6 +185,22 @@ describe Position, "(all tests)" do
     m = @p.algebraic_read("g3")
     m.to_s.should == "Pg2g3"
   end
+  
+  it "get smallest attacker" do
+    @p.load_fen("8/1b6/8/3n4/3pk3/q3K2r/6n1/2b5 w - - 0 1")
+    a = @p.rook_attackers(20, WHITE)
+    a.should == [[BROOK, 23], [BQUEEN, 16]]
+    a = @p.knight_attackers(20, WHITE)
+    a.should == [[BKNIGHT, 14], [BKNIGHT, 35]]
+    a = @p.bishop_attackers(20, WHITE)
+    a.should == [[BBISHOP, 2]]
+    a = @p.pawn_attackers(20, WHITE)
+    a.should == [[BPAWN, 27]]
+    a = @p.king_attackers(20, WHITE)
+    a.should == [[BKING, 28]]
+    a = @p.get_smallest_attacker(20, WHITE)
+    a.should == [BPAWN, 27]
+  end
 
 end
 

@@ -34,19 +34,27 @@ class Position
 
 # private
 
-  def knight_check?(index, side)
-    other_color = (side == WHITE ? @bitboards[BKNIGHT] : @bitboards[WKNIGHT])
-    return true if indexes(@knight_attacks[index] & other_color).first
-    false
+  def knight_attackers(index, side)
+		piece = colored_piece(KNIGHT, 1-side)
+    indexes(@knight_attacks[index] & @bitboards[piece]).map {|i| [piece, i]}
   end
 
-  def rook_check?(index, side)
-    other_color = (side == WHITE ? (@bitboards[BROOK] | @bitboards[BQUEEN]) : (@bitboards[WROOK] | @bitboards[WQUEEN]))
-    return true if indexes(rook_moves(index) & other_color).first
-    return false
+  def rook_attackers(index, side)
+		piece1 = colored_piece(ROOK, 1-side)
+		piece2 = colored_piece(QUEEN, 1-side)
+		rm = rook_moves(index)
+    rv = []
+    for i in indexes(rm & @bitboards[piece1])
+			rv << [piece1, i]
+    end
+    for i in indexes(rm & @bitboards[piece2])
+			rv << [piece2, i]
+    end
+    rv
   end
 
-  def bishop_check?(index, side)
+  def bishop_attackers(index, side)
+		attackers = []
     for inc in [-9,-7,7,9]
       limit = 7
       target = index + inc
@@ -59,7 +67,8 @@ class Position
           if side != color(capture)
             pt = piece_type(capture)
             if pt == BISHOP or pt == QUEEN
-              return true
+              attackers << [colored_piece(pt,1-side), target]
+              break
             else
               break
             end
@@ -73,12 +82,11 @@ class Position
         limit    -= 1
       end
     end
-    return false
+    attackers
   end
 
-  def queens_check?(index, side)
-  	return true if rook_check?(index, side) or bishop_check?(index, side)
-  	false
+  def queen_attackers(index, side)
+  	rook_attackers(index, side) + bishop_attackers(index, side)
   end
 
   def gen_knights_moves(side)
@@ -196,15 +204,16 @@ class Position
 		moves
 	end
 
-	def pawn_check?(index, side)
+	def pawn_attackers(index, side)
+		rv = []
 	  if(side == WHITE)
-	    return true if(index % 8 != 0 and index+7 < 63 and piece_at(index+7) == BPAWN) or
-	                  (index % 8 != 7 and index+9 < 63 and piece_at(index+9) == BPAWN)
+	    rv << [BPAWN, index+7] if(index % 8 != 0 and index+7 < 63 and piece_at(index+7) == BPAWN)
+	    rv << [BPAWN, index+9] if(index % 8 != 7 and index+9 < 63 and piece_at(index+9) == BPAWN)
 	  else
-	    return true if(index % 8 != 7 and index-7 > 0 and piece_at(index-7) == WPAWN) or
-	                  (index % 8 != 0 and index-9 > 0 and piece_at(index-9) == WPAWN)
+	    rv << [WPAWN, index-7]  if(index % 8 != 7 and index-7 > 0 and piece_at(index-7) == WPAWN)
+	    rv << [WPAWN, index-9]  if(index % 8 != 0 and index-9 > 0 and piece_at(index-9) == WPAWN)
 	  end
-	  return false
+	  rv
 	end
 
 	def gen_pawns_moves(side)
@@ -217,7 +226,7 @@ class Position
 			attack_right      = -7
 			promote_low       = -1
 			promote_high      = 8
-			promotes          = [BROOK, BQUEEN, BKNIGHT, BBISHOP]
+			promotes          = [BQUEEN, BROOK, BBISHOP, BKNIGHT]
 		else
 			in_front_int      = 8
 			second_rank_high  = 16
@@ -227,7 +236,7 @@ class Position
 			attack_right      = 9
 			promote_low       = 55
 			promote_high      = 64
-			promotes          = [WROOK, WQUEEN, WKNIGHT, WBISHOP]
+			promotes          = [WQUEEN, WROOK, WBISHOP, WKNIGHT]
 		end
 		moves = []
 		for p in indexes(@bitboards[colored_piece(PAWN, side)])
@@ -349,13 +358,21 @@ class Position
 		end
 	end
 
-	def king_check?(index, side)
-		return true if indexes(@king_attacks[index] & (side == WHITE ? @bitboards[BKING] : @bitboards[WKING])).first
-		return false
+	def king_attackers(index, side)
+		piece = colored_piece(KING, 1-side)
+		indexes(@king_attacks[index] & @bitboards[piece]).map {|i| [piece, i]}
+	end
+
+	# return an array of [piece, index]
+	def get_attackers(index, side)
+		queen_attackers(index, side) +
+		knight_attackers(index, side) +
+		pawn_attackers(index, side) +
+		king_attackers(index, side)
 	end
 
 	def in_check?(index, side)
-	  return true if queens_check?(index, side) or knight_check?(index, side) or pawn_check?(index, side) or king_check?(index, side)
+	  return true if get_attackers(index, side)[0]
 	  return false
 	end
 

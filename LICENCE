@@ -7,9 +7,7 @@ http://www.gnu.org/licenses/gpl.html
 Thanks to
 =========
 
-I have been inspired (meaning I copied and adapted a lot of code) from RubyKnight
-concerning move generation.
-
+Concerning move generation, in the begining I have been inspired (meaning I copied and adapted a lot of code) from RubyKnight. Then I replace it bit by bit with precalculated bitboard moves, while correcting its bugs :).
 https://github.com/cdmoyer/RubyKnight
 
 Other sources

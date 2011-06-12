@@ -20,11 +20,25 @@ class Stats
     @time_per_turn      = []
     @nodes_per_second   = []
     @score_per_turn     = []
+    @specials           = Hash.new
   end
 
   def start_turn
     @current_turn_nodes = 0
     @start_time = Time.now
+  end
+  
+  def start_special(name)
+    @specials[name] ||= Array.new
+    @specials[name] << Time.now
+  end
+  
+  def reset_special(name)
+    @specials[name] = Array.new
+  end
+  
+  def end_special(name)
+    @specials[name][-1] = Time.now - @specials[name][-1]
   end
 
   def inc_turn_nodes
@@ -62,6 +76,11 @@ class Stats
     puts "time per turn:"
     puts pretty_array(@time_per_turn,     :pretty_time)
     puts "  #{pretty_time(@time_per_turn.inject(:+) / @time_per_turn.size)} on average for #{@time_per_turn.size} moves"
+    puts "specials:"
+    @specials.each { |name, values|
+      next if values.size == 0
+      puts "  #{name}: #{pretty_time(values.inject(:+))} (#{values.size} items)"
+      }
   end
 
   def nodes_per_second

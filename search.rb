@@ -24,6 +24,7 @@ class Search
 
   def play(type=:iterative_search)
     @done = nil
+    @stats.reset_special(:see)
     @stats.start_turn
     # type of play depends of the function used
     # random_move, simple
@@ -163,6 +164,7 @@ class Search
       if(moves_searched == 0) # First move, use full-window search
         score = -negamax_with_reductions(-b, -a, depth-1)
       else
+        # Late Move Reduction
         if(moves_searched >= FullDepthMoves and depth >= ReductionLimit and ok_to_reduce?(m))
           # Search this move with reduced depth
           score = -negamax_with_reductions(-(a+1), -a, depth-2)
@@ -188,7 +190,7 @@ class Search
 
   def null_move_allowed?
 		index = @p.indexes(@p.bitboards[colored_piece(KING, @side)]).first
-    !@p.in_check?(index,@side) and !@null_move
+    !@p.in_check?(index,@p.side) and !@null_move
   end
   
   # Common Conditions
@@ -201,7 +203,7 @@ class Search
   # - Depth<3 (sometimes depth<2)
   def ok_to_reduce?(move)
 		index = @p.indexes(@p.bitboards[colored_piece(KING, @side)]).first
-    return false if move.capture or move.promotion or @p.in_check?(index,@side)
+    return false if move.capture or move.promotion or @p.in_check?(index,@p.side)
     #puts "reducing #{move}"
     true
   end
@@ -210,19 +212,27 @@ class Search
     stand_pat = factor*evaluate()
     return beta if( stand_pat >= beta )
 
+    # Delta pruning
     #BIG_DELTA = piece_value(QUEEN)
     #if ( isPromotingPawn() ) BIG_DELTA += 775;
-
     return alpha if(stand_pat < alpha - BIG_DELTA) # delta pruning
-
     alpha = stand_pat if(stand_pat > alpha)
-    return alpha if depth >= 3 # FIXME
+    #return alpha if depth >= 3 # FIXME
 
-    moves = @p.gen_legal_captures
-    sort_moves!(moves)
-
-    for m in moves
+    #moves = @p.gen_legal_captures
+    #sort_moves!(moves)
+    for m in @p.gen_legal_captures
       #return factor*99999 if king_captured?(m)
+      
+      if @debug
+        n = false
+        @stats.start_special(:see)
+        n = true if see_root(m) < 0
+        @stats.end_special(:see)
+        next if n
+      else
+        next if see_root(m) < 0
+      end  
       @p.make(m)
       score = -quiesce( -beta, -alpha, depth+1 )
       @p.unmake
@@ -245,8 +255,7 @@ class Search
   def see(square)
     piece, from_square = @p.get_smallest_attacker(square, @p.side)
     return 0 if not piece
-    move = Move.new(piece, from_square, square, @p.piece_at(square))
-    @p.make(move)
+    @p.make(Move.new(piece, from_square, square, @p.piece_at(square)))
     value = piece_value(piece) - see(square)
     @p.unmake
     return value

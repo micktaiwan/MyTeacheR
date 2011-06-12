@@ -34,7 +34,7 @@ class MyTeacher
     @stats    = Stats.new
     @p        = Position.new(@stats)
     @s        = Search.new(@p, @stats)
-    @s.debug  = true
+    #@s.debug  = true
   end
 
   # TODO: a command to launch xboard
@@ -64,75 +64,76 @@ class MyTeacher
   end
 
   def main
-    begin
       comp = proc { |s| LIST.grep( /^#{Regexp.escape(s)}/ ) }
       Readline.completion_append_character = ""
       Readline.completion_proc = comp
       while input = Readline.readline('>', true) # TODO: autocompletion ! http://bogojoker.com/readline/
-        case
-        when (input=="quit" or input=="exit")
-          exit
-        when input=="help"
-          print_help
-        when (input=="" or input=="play")
-          puts "side: #{@p.side==WHITE ? "w":"b"}"
-          start = Time.now
-          can_move = @s.play
-          puts "move: #{@s.move}, score = #{@s.score}, #{pretty_time(Time.now()-start)}"
-          @p.printp
-          puts "#{@p.side==WHITE ? "Blacks":"Whites"} win !" if !can_move
-        when input=="reset"
-          @p.reset_to_starting_position
-          @p.printp
-        when input=="unmake"
-          @p.unmake
-          @p.printp
-        when input[0..4]=="perft"
-          do_perft(input[6..-1].to_i)
-        when input[0..3]=="best"
-          if input[5..6] == "on"
-            @s.debug = true
-            puts "Best move display is now on"
-          else
-            @s.debug = nil
-            puts "Best move display is now off"
-          end
-        when input=="show"
-          @p.printp
-        when input=="moves"
-          @p.gen_legal_moves.sort_by {|m| m.to_s}.each { |m|
-            puts "#{m.to_s}: #{m.inspect}"
-            }
-        when input=="solo"
-          solo
-        when input[0..5]=="divide"
-          divide(input[7..-1].to_i)
-        when input[0..7]=="load fen"
-          @p.load_fen input[9..-1]
-          @p.printp
-        when input[0..3]=="test"
-          do_testsuite(input[5..-1].to_i)
-        when input=="ptest"
-          do_performancetestsuite
-        else # move
-			    input.gsub!(/\?/, '')
-			    begin
-				    @p.make_from_input(input)
-				    @p.change_side if color(@p.history.last[0].piece) == @p.side # this test allow to move the same color 2 times (not real chess!)
-				    @p.printp
-			    #rescue IllegalMoveException
-				  #  logout "Illegal move: #{input}"
-			    rescue	Exception=> e
-				    puts e
-      		  puts e.backtrace
-			    end
-        end
+	begin
+	  case
+	  when (input=="quit" or input=="exit")
+	    exit
+	  when input=="help"
+	    print_help
+	  when (input=="" or input=="play")
+	    puts "side: #{@p.side==WHITE ? "w":"b"}"
+	    start = Time.now
+	    can_move = @s.play
+	    puts "move: #{@s.move}, score = #{@s.score}, #{pretty_time(Time.now()-start)}"
+	    @p.printp
+	    puts "#{@p.side==WHITE ? "Blacks":"Whites"} win !" if !can_move
+	  when input=="reset"
+	    @p.reset_to_starting_position
+	    @p.printp
+	  when input=="unmake"
+	    @p.unmake
+	    @p.printp
+	  when input[0..4]=="perft"
+	    do_perft(input[6..-1].to_i)
+	  when input[0..3]=="best"
+	    if input[5..6] == "on"
+	      @s.debug = true
+	      puts "Best move display is now on"
+	    else
+	      @s.debug = nil
+	      puts "Best move display is now off"
+	    end
+	  when input=="show"
+	    @p.printp
+	  when input=="moves"
+	    @p.gen_legal_moves.sort_by {|m| m.to_s}.each { |m|
+	      puts "#{m.to_s}: #{m.inspect}"
+	      }
+	  when input=="solo"
+	    solo
+	  when input[0..5]=="divide"
+	    divide(input[7..-1].to_i)
+	  when input[0..7]=="load fen"
+	    @p.load_fen input[9..-1]
+	    @p.printp
+	  when input[0..3]=="test"
+	    do_testsuite(input[5..-1].to_i)
+	  when input=="ptest"
+	    do_performancetestsuite
+	  else # move
+			      input.gsub!(/\?/, '')
+			      begin
+				      @p.make_from_input(input)
+				      @p.change_side if color(@p.history.last[0].piece) == @p.side # this test allow to move the same color 2 times (not real chess!)
+				      @p.printp
+			      #rescue IllegalMoveException
+				    #  logout "Illegal move: #{input}"
+			      rescue	Exception=> e
+				      puts e
+		    puts e.backtrace
+			      end
+	  end
+	rescue	Interrupt=> e # Ctrl-C
+	  puts
+	rescue	Exception=> e
+	  puts e
+	  puts e.backtrace
+	end
       end
-    rescue	Interrupt=> e # Ctrl-C
-      puts
-    rescue	Exception=> e
-	    puts e
-    end
   end
 
 # history of s/n
