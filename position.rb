@@ -26,11 +26,12 @@ class Position
       @bitboards[i] = 0
     end
     @all_whites = @all_blacks = @all_pieces = 0
-    @side = WHITE
-    @ep   = -1
-    @ply  = @hclock = 0
-    @hply = 1
-    @history = []
+    @side 		= WHITE
+    @ep   		= -1
+    @ply  		= @hclock = 0
+    @hply 		= 1
+    @history 	= []
+    @stats.empty! if @stats
   end
 
   def is_empty?
@@ -350,6 +351,14 @@ class Position
     	@hclock = 0
 		end
     increment_ply(-1)
+		change_side
+	end
+
+	def make_null_move
+		change_side
+	end
+
+	def unmake_null_move
 		change_side
 	end
 

@@ -136,6 +136,19 @@ class Search
 
   def negamax_with_reductions(a,b,depth)
     return quiesce(a,b,0) if(depth <= 0)
+    
+    # Null move reduction
+    if (null_move_allowed?)
+      r = depth > 6 ? 4 : 3
+      @p.make_null_move
+      score = -negamax_with_reductions(-b, 1-b, depth-r-1)
+      @p.unmake_null_move
+      if (score >= b)
+        depth -= 4 # reduce search
+        return quiesce(a,b,0) if ( depth <= 0 )
+      end
+    end    
+    
     moves = @p.gen_legal_moves
     return factor*99999 if moves.size == 0
     sort_moves!(moves)
@@ -146,7 +159,7 @@ class Search
       if(moves_searched == 0) # First move, use full-window search
         score = -negamax_with_reductions(-b, -a, depth-1)
       else
-        if(moves_searched >= FullDepthMoves and depth >= ReductionLimit and ok_to_reduce(m))
+        if(moves_searched >= FullDepthMoves and depth >= ReductionLimit and ok_to_reduce?(m))
           # Search this move with reduced depth
           score = -negamax_with_reductions(-(a+1), -a, depth-2)
         else
@@ -178,7 +191,11 @@ class Search
   # - Anytime in a PV-Node in a PVS search
   # - Depth<3 (sometimes depth<2)
 
-  def ok_to_reduce(move)
+  def null_move_allowed?
+    true
+  end
+  
+  def ok_to_reduce?(move)
     return false if move.capture or move.promotion
     #puts "reducing #{move}"
     true

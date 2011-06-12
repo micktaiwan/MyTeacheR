@@ -10,12 +10,16 @@ class Stats
   def initialize
     @p = nil
     @s = nil
-    @total_nodes = 0
+    empty!
+  end
+  
+  def empty!
+    @total_nodes        = 0
     @current_turn_nodes = 0
-    @nb_moves_per_turn = []
-    @time_per_turn = []
-    @nodes_per_second = []
-    @score_per_turn = []
+    @nb_moves_per_turn  = []
+    @time_per_turn      = []
+    @nodes_per_second   = []
+    @score_per_turn     = []
   end
 
   def start_turn
@@ -69,10 +73,14 @@ private
   def pretty_array(a, proc)
     rv = []
     a.each_with_index { |item, index|
-      if !item
-        rv << "  #{index+1}. Human (#{@p.history[index][0]})"
+      if @p.history.size-1 < index
+        rv << "  #{index+1}. no history[#{index}])"
       else
-        rv << "  #{index+1}. #{method(proc).call(item)} (#{@p.history[index][0]})"
+        if !item
+          rv << "  #{index+1}. Human (#{@p.history[index][0]})"
+        else
+          rv << "  #{index+1}. #{method(proc).call(item)} (#{@p.history[index][0]})"
+        end
       end
       }
     rv.join("\n")

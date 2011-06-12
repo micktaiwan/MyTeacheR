@@ -24,7 +24,7 @@ class MyTeacher
 
   LIST = [
     'play', 'unmake', 'show', 'help',
-    'reset', 'load fen ', 'solo',
+    'reset', 'load fen ', 'solo', 'quit', 'exit',
     'best on', 'best off', 'moves',
     'perft ', 'divide ', 'test ', 'ptest'
     ].sort
@@ -47,6 +47,7 @@ class MyTeacher
     puts "show..............print the board"
     puts
     puts "********* UTILS"
+    puts "quit/exit.........exit program"
     puts "reset.............reset the board to initial position"
     puts "load fen <fen>....load a FEN position"
     puts "solo..............start an infinite loop, computer playing alternatively from current position. Ctrl-C to stop"
@@ -69,6 +70,8 @@ class MyTeacher
       Readline.completion_proc = comp
       while input = Readline.readline('>', true) # TODO: autocompletion ! http://bogojoker.com/readline/
         case
+        when (input=="quit" or input=="exit")
+          exit
         when input=="help"
           print_help
         when (input=="" or input=="play")
@@ -80,6 +83,7 @@ class MyTeacher
           puts "#{@p.side==WHITE ? "Blacks":"Whites"} win !" if !can_move
         when input=="reset"
           @p.reset_to_starting_position
+          @p.printp
         when input=="unmake"
           @p.unmake
           @p.printp
