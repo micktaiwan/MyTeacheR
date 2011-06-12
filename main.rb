@@ -59,7 +59,7 @@ class MyTeacher
     puts "perft <n>.........display Perft(n)"
     puts "divide <n>........display Divide(n)"
     puts "test <n>..........generate all possible moves for a suite of positions at depth n"
-    puts "ptest.............performance test suite (TODO)"
+    puts "ptest.............performance test suite"
     puts
   end
 

@@ -13,12 +13,13 @@ class Search
   attr_accessor :debug
 
   def initialize(position, stats=nil)
-    @p        = position
-    @stats    = stats
-    @stats.s  = self if @stats
-    @debug    = nil
-    @score    = 0
-    @move     = nil
+    @p          = position
+    @stats      = stats
+    @stats.s    = self if @stats
+    @debug      = nil
+    @score      = 0
+    @move       = nil
+    @null_move  = false
   end
 
   def play(type=:iterative_search)
@@ -139,6 +140,7 @@ class Search
     
     # Null move reduction
     if (null_move_allowed?)
+      @null_move = true
       r = depth > 6 ? 4 : 3
       @p.make_null_move
       score = -negamax_with_reductions(-b, 1-b, depth-r-1)
@@ -147,6 +149,8 @@ class Search
         depth -= 4 # reduce search
         return quiesce(a,b,0) if ( depth <= 0 )
       end
+    else
+      @null_move = false
     end    
     
     moves = @p.gen_legal_moves
@@ -182,6 +186,11 @@ class Search
     a
   end
 
+  def null_move_allowed?
+		index = @p.indexes(@p.bitboards[colored_piece(KING, @side)]).first
+    !@p.in_check?(index,@side) and !@null_move
+  end
+  
   # Common Conditions
   # Most programs do not reduce these types of moves:
   # - Tactical moves (captures and promotions)
@@ -190,13 +199,9 @@ class Search
   # - Moves that cause a search extension
   # - Anytime in a PV-Node in a PVS search
   # - Depth<3 (sometimes depth<2)
-
-  def null_move_allowed?
-    true
-  end
-  
   def ok_to_reduce?(move)
-    return false if move.capture or move.promotion
+		index = @p.indexes(@p.bitboards[colored_piece(KING, @side)]).first
+    return false if move.capture or move.promotion or @p.in_check?(index,@side)
     #puts "reducing #{move}"
     true
   end
