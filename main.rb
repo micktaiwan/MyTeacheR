@@ -1,4 +1,7 @@
 #!/usr/bin/env ruby
+# :main: README
+
+# =MyTeacher
 # main program without gui
 
 require 'position'
@@ -38,7 +41,6 @@ class MyTeacher
     @s.debug  = true
   end
 
-  # TODO: a command to launch xboard
   def print_help
     puts
     puts "********* PLAY"

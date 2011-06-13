@@ -1,23 +1,32 @@
+# A move tree entry
 class Entry
+
+  attr_reader :children, :move, :score
 
   def initialize(move, score, depth)
     @move     = move
     @score    = score
     @analysed_depth = -1 # to what depth this move has been analyzed
-    @children = Array.new
+    @children = nil
+  end
+
+  def add_child(move)
+    @children << Entry.new(move, nil, 0)
+  end
+
+  def update(score, depth)
+    c.score = score
+    c.depth = depth
+    # TODO: sort_children
+    @analysed_depth = depth # TODO: do not test if depth < @analysed_depth ?
+    # TODO: update parents score and sort them
   end
 
   # update (or add) a child and sort it relative to its score
   def update_child(move, score, depth)
     c = search_child(move)
-    if !entry
-      @children << Entry.new(move, score, depth) # TODO: insert sorted ?
-    else
-      c.score = score
-      c.depth = depth
-      # TODO: sort_children
-    end
-    @analysed_depth = depth
+    raise "didn't find this child #{move} for #{@move}" if !entry
+    c.update(score, depth)
   end
 
   def search_child(move)
@@ -27,11 +36,19 @@ class Entry
     nil
   end
 
+  # return the next sibling with highest score for the given depth
+  def next_sibling(depth)
+    @children.select { |c| c.depth <= depth }.sort_by { |c| -c.score}.first
+    # TODO: resorting every time ?
+  end
+
 end
 
+# All possible (not pruned) moves are stored in a MoveTree object
 class MoveTree
 
   attr_reader :depth_pointer, :move_index, :current_search_depth
+  attr_accessor :children_initialized
 
   def initialize(p, s)
     @p, @s            = p, s
@@ -47,29 +64,29 @@ class MoveTree
   def search(max_depth=3)
     @max_depth      = max_depth
     for depth in (0..max_depth)
-      iterate(@next_node, depth)
+      iterate(@next_node, -MAX, MAX, depth)
     end
   end
 
   # start an iteration from current @p
-  def iterate(from_node, depth)
-    if from_node.children.size == 0 # or if depth == 0 ?
-      init_nodes(from_nodes, depth)
-    end
-    m = from_node.get_next(depth) # children are sorted
-    @p.make(m)
-    score = -@s.negamax_with_reductions(-b, -a, depth)
+  def iterate(from_node, a, b, depth)
+    init_nodes(from_nodes, depth) if !from_node.children
+    child = from_node.next_sibling(depth) # children are sorted
+    return if !child # once all the moves has been searched, simply return
+
+    # real search begins here
+    @p.make(child.move)
+    score = -iterate(child, -b, -a, depth)
     @p.unmake
-    from_node.update_child(m, score, depth)
+    child.update(m, score, depth)
   end
 
   def init_nodes(from_node, depth)
     raise "is it normal that for initialisation depth is = 0 ?" if depth != 0
+    # TODO: remove depth parameters if previous raise is true
+    # TODO: what if no moves are possibles ? then it is normal that this node has no children....
     for m in @p.gen_legal_moves
-      @p.make(m)
-      score = -@s.negamax_with_reductions(-b, -a, depth)
-      @p.unmake
-      from_node.update_child(m, score, depth)
+      from_node.add_child(m)
     end
   end
 

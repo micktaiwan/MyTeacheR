@@ -5,6 +5,8 @@ require 'init'
 
 load './generator.rb'
 
+# =A chess position
+# http://howtoplaychessforbeginners.com/wp-content/uploads/2011/05/Best-Chess-Openings-300x226.jpg
 class Position
 
   include Constants

@@ -53,5 +53,11 @@ describe Search, "" do
     @s.move.to_s.should == "Qc6xc8"
   end
 
+  it "should return a checkmate" do
+    @p.load_fen("8/8/8/8/8/2K5/1Q6/k7 b - - 30 89")
+    @s.play
+    @s.move.should == nil
+  end
+
 end
 

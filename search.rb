@@ -48,17 +48,17 @@ class Search
   end
 
   def depth_first
-    search_root(-100000, 100000, 3)
+    search_root(-MAX, MAX, 3)
   end
 
   def iterative_start
-    return iterate(-100000, 100000, 3)
+    return iterate(-MAX, MAX, 3)
 
     #@moves = [] # store PV
     depth = 1
     while depth <= 3
       puts "d=#{depth}"
-      move, score = iterate(-100000, 100000, depth)
+      move, score = iterate(-MAX, MAX, depth)
       puts "> best so far: #{move}, score: #{score}, nodes: #{@stats.current_turn_nodes}, n/s: #{@stats.nodes_per_second}, #{pretty_time(5000.0/@stats.nodes_per_second)} for 5000 nodes" if @debug
       depth += 1
     end

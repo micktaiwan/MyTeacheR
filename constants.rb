@@ -3,7 +3,6 @@ end
 class IllegalInput < RuntimeError
 end
 
-
 module Constants
 
 WHITE, BLACK = 0, 1
@@ -25,6 +24,7 @@ BYTE                = 0xFF
    K2  = 0xcccc0000cccc0000
    K4  = 0xf0f0f0f00f0f0f0f
 
+MAX = 999999
 FullDepthMoves = 4
 ReductionLimit = 2
 
