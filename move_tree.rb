@@ -1,25 +1,53 @@
+require 'constants'
+
 # A move tree entry
 class Entry
 
-  attr_reader :children, :move, :score
+  include Constants
 
-  def initialize(move, score, depth)
+  attr_reader :parent, :children, :move, :score, :analyzed_depth
+
+  def initialize(parent=nil, move=nil, score=-MAX, adepth=0)
+    @parent   = parent
     @move     = move
     @score    = score
-    @analysed_depth = -1 # to what depth this move has been analyzed
+    @analyzed_depth = adepth # to what depth this move has been analyzed
     @children = nil
   end
 
   def add_child(move)
-    @children << Entry.new(move, nil, 0)
+    @children ||= []
+    @children << Entry.new(self, move, -MAX, -1)
+  end
+
+  def print_children
+    puts @children.join(", ")
+  end
+
+  def sort_children
+    @children = @children.sort_by { |c| -c.score}
+  end
+
+  def to_s
+    "#{@move} (#{@score} for #{@analyzed_depth})"
+  end
+
+  # recursively sort children up to the root
+  def update_parent
+    return if !@parent
+    #puts "in update_parent for #{self}"
+    @parent.sort_children
+    if @parent.parent # not root move
+      @parent.update(-@parent.children.first.score, @analyzed_depth)
+      @parent.update_parent
+    end
   end
 
   def update(score, depth)
-    c.score = score
-    c.depth = depth
-    # TODO: sort_children
-    @analysed_depth = depth # TODO: do not test if depth < @analysed_depth ?
-    # TODO: update parents score and sort them
+    #puts "Updating #{@move} with score #{score} for depth #{depth}"
+    @score = score
+    @analyzed_depth = depth # TODO: do not test if depth < @analysed_depth ?
+    update_parent # sort all siblings and update score tree
   end
 
   # update (or add) a child and sort it relative to its score
@@ -38,53 +66,90 @@ class Entry
 
   # return the next sibling with highest score for the given depth
   def next_sibling(depth)
-    @children.select { |c| c.depth <= depth }.sort_by { |c| -c.score}.first
-    # TODO: resorting every time ?
+    @children.select { |c| c.analyzed_depth < depth }.first
   end
 
 end
 
+
+#################################################################
 # All possible (not pruned) moves are stored in a MoveTree object
+#################################################################
+
 class MoveTree
+
+  include Constants
 
   attr_reader :depth_pointer, :move_index, :current_search_depth
   attr_accessor :children_initialized
 
-  def initialize(p, s)
-    @p, @s            = p, s
+  def initialize(p,s)
+    @p, @s            = p,s
     @depth_index      = 0
     @move_index       = 0
     @current_search_depth  = 0
-    @root_node        = Entry.new(nil,nil,0)
-    @next_node        = @root_node
+    @root             = Entry.new
+    @next_node        = @root
     @max_depth        = 3
-    @depth_from_start = 0 # depth from the begin, that's the depth of the tree
+    @ply              = 0 # depth from the begin, that's the depth of the tree
   end
 
   def search(max_depth=3)
-    @max_depth      = max_depth
-    for depth in (0..max_depth)
-      iterate(@next_node, -MAX, MAX, depth)
+    # TODO: all tree nodes analyzed depth must be decremented
+    # or must be calculated taking into account @current_search_depth and @ply
+    @max_depth = max_depth
+    best = @root
+    for depth in (1..@max_depth)
+      puts
+      puts "===== iterating #@next_node to #{depth}"
+      score = iterate(@next_node, -MAX, MAX, depth)
+      if(score > best.score )
+        best  = @next_node.children.first
+        puts
+        puts "best so far: #{best.move}, score: #{best.score}" #, nodes: #{@s.stats.current_turn_nodes}, n/s: #{@stats.nodes_per_second}, #{pretty_time(5000.0/@stats.nodes_per_second)} for 5000 nodes" if @s.debug
+        puts
+      end
+      #@next_node = @root.next_sibling(depth)
+      #break if !@next_node
     end
+    [best.move, best.score]
   end
 
   # start an iteration from current @p
   def iterate(from_node, a, b, depth)
-    init_nodes(from_nodes, depth) if !from_node.children
-    child = from_node.next_sibling(depth) # children are sorted
-    return if !child # once all the moves has been searched, simply return
+    return @s.quiesce(a,b,0) if(depth <= 0)
+    puts "\n *** iterate from #{from_node}, at depth #{depth}. a=#{a}, b=#{b}\n"
 
-    # real search begins here
-    @p.make(child.move)
-    score = -iterate(child, -b, -a, depth)
-    @p.unmake
-    child.update(m, score, depth)
+    generate_nodes(from_node) if !from_node.children
+    # puts "Nodes: #{@next_node.children.join(", ")}"
+    return a if from_node.children.size == 0 # TODO: really return alpha if no move is possible ????
+
+    #best = -MAX
+    while(node = from_node.next_sibling(depth)) # children are sorted
+      #puts "\nnext node is #{node}"
+
+      # real search begins here
+      @p.make(node.move)
+      puts "=> making #{node}"
+      score = -iterate(node, -b, -a, depth-1)
+      @p.unmake
+      puts "<= unmaking #{node}"
+
+      if(score >= b)
+        puts "beta cutoff for #{node} at #{score} while beta is #{b}"
+        #node.update(b, depth)
+        return b
+      end
+      a = score if(score > a)
+      node.update(score, depth)
+
+      #best = score if(score > a)
+    end
+    #best # or from_node.next_sibling(depth+1).score
+    a
   end
 
-  def init_nodes(from_node, depth)
-    raise "is it normal that for initialisation depth is = 0 ?" if depth != 0
-    # TODO: remove depth parameters if previous raise is true
-    # TODO: what if no moves are possibles ? then it is normal that this node has no children....
+  def generate_nodes(from_node)
     for m in @p.gen_legal_moves
       from_node.add_child(m)
     end

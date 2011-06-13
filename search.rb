@@ -1,12 +1,13 @@
 require 'position'
 require 'eval'
 require 'stats'
+require 'move_tree'
 
 class Search
 
   include Constants
 
-  attr_reader :move, :position, :done, :stats, :score
+  attr_reader   :move, :position, :done, :stats, :score
   attr_accessor :debug
 
   def initialize(position, stats=nil)
@@ -17,6 +18,7 @@ class Search
     @score      = 0
     @move       = nil
     @null_move  = false
+    @tree       = MoveTree.new(@p,self)
   end
 
   def play(type=:iterative_search)
@@ -52,6 +54,7 @@ class Search
   end
 
   def iterative_start
+    return @tree.search(2)
     return iterate(-MAX, MAX, 3)
 
     #@moves = [] # store PV
@@ -203,6 +206,7 @@ class Search
 
   def quiesce(alpha, beta, depth)
     stand_pat = factor*evaluate()
+    #puts "Quiescing... d=#{depth}, stand pat = #{stand_pat}"
     return beta if( stand_pat >= beta )
 
     # Delta pruning
@@ -233,6 +237,7 @@ class Search
       return beta if( score >= beta )
       alpha = score if( score > alpha )
     end
+    #puts "returning #{alpha}"
     alpha
   end
 
