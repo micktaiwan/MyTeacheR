@@ -10,7 +10,9 @@ require 'readline'
 
 class MyTeacher
 
-  ProgramVersion = "MyTeacheR - v0.1 - 12 June 2011"
+  # TODO externalize this string
+  # TODO: plan version and their content ?
+  ProgramVersion = "MyTeacheR - v0.1 - 14 June 2011"
   include MyTeacherUtils
 
   Pre_perft = {
@@ -94,6 +96,7 @@ class MyTeacher
             @p.unmake
             @p.printp
           when input[0..4]=="perft"
+            @p.reset_to_starting_position
             do_perft(input[6..-1].to_i)
           when input[0..3]=="best"
             if input[5..6] == "on"
@@ -161,9 +164,11 @@ class MyTeacher
 # 3.  0.00110999253349284  with king bitboards
 # 4.  0.00105323814873062  with rook moves (and queens using rooks moves)
 # 5   0.000979309031678275 without Proc.new and tweaking colored_piece
+# 6   0.000341995057290497 legal moves check using new technique
+#     0.00004 without non legal moves pruning
 
   def do_perft(depth) # http://wismuth.com/chess/statistics-games.html
-    pt = pretty_time(0.000985*Pre_perft[depth])
+    pt = pretty_time(0.000345*Pre_perft[depth])
     puts "depth is #{depth}. #{pt} to go"
     t = Time.now
     total = perft(depth)
@@ -190,17 +195,17 @@ class MyTeacher
   end
 
   def divide(depth)
-    @p.gen_legal_moves.sort_by {|m| m.to_s}.each { |m|
-      print m, "  "
+    @p.gen_legal_moves.sort_by {|m| m.to_s(:xboard)}.each do |m|
+      print m.to_s(:xboard), " "
       @p.make(m)
       puts perft(depth-1)
       @p.unmake
-      }
+    end
   end
 
   def do_testsuite(depth)
     depth = 3 if depth==""
-    f = File.open("perftsuite.epd")
+    f = File.open("resources/perftsuite.epd")
     begin
       loop do
         break if f.eof
@@ -230,7 +235,7 @@ class MyTeacher
 
   def do_performancetestsuite
     puts "Starting strength test suite. Ctrl-C to stop it."
-    f = File.open("wac.epd")
+    f = File.open("resources/wac.epd")
     bad  = []
     good = []
     total = 0
