@@ -89,7 +89,27 @@ class Entry
 end
 
 ########################################################################
-# MoveTree stores moves and search algorythm
+# MoveTree stores moves and search algorithm
+#
+# Algorithm:
+#
+# choose_next_node:
+#   generate all children
+#   evaluate each children
+#   sort them
+#     sort_parents(children[0])
+#   the next node is pv(@root)[-1] => pb: when do we evaluate siblings ?
+#
+#
+# sort_parents(node)
+#   set node.parent alpha, beta to -beta, -alpha
+#   sort parent siblings
+#   sort_parent(parent.siblings[0]) (parent.parent.children[0])
+# end
+#
+#
+#
+
 class MoveTree
 
   include Constants
