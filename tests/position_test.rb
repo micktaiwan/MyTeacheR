@@ -88,10 +88,25 @@ describe Position, "(all tests)" do
       }
   end
 
+  it "should unmake correctly 3" do
+    @p.reset_to_starting_position
+    #not setting BLACK to play @p.side == BLACK
+    @p.make_from_input("d7d5")
+    @p.unmake
+    @p.all_pieces.should == INIT_POSITION
+    @p.piece_at(C7).should == BPAWN
+  end
+
+  it "should take en passant" do
+    @p.load_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1")
+    @p.gen_legal_moves.map{|m|m.to_s(:xboard)}.include?("a2a4").should == true
+    @p.make_from_input("a2a4")
+    @p.gen_legal_moves.map{|m|m.to_s(:xboard)}.include?("b4a3").should == true
+  end
+
   it "should load fen correctly" do
-    #@p.load_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
     @p.load_fen("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2")
-    @p.all_pieces.should == 18445336716276461503
+    @p.all_pieces.should == 0xFFFB00041020EFBF
     @p.bitboards[CAN_CASTLE].should == 15
     @p.side.should == BLACK
     @p.hclock.should == 1
@@ -185,7 +200,7 @@ describe Position, "(all tests)" do
     m = @p.algebraic_read("g3")
     m.to_s.should == "Pg2g3"
   end
-  
+
   it "get smallest attacker" do
     @p.load_fen("8/1b6/8/3n4/3pk3/q3K2r/6n1/2b5 w - - 0 1")
     a = @p.rook_attackers(20, WHITE)

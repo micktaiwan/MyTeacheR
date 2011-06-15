@@ -8,19 +8,20 @@ class Entry
   attr_reader   :parent, :children, :move, :analyzed_depth, :beta
   attr_accessor :score
 
-  def initialize(tree, parent=nil, move=nil, score=-MAX, adepth=0)
+  def initialize(p, tree, parent=nil, move=nil, score=-MAX, adepth=0)
+    @p        = p # position
     @parent   = parent
     @move     = move
     @score    = score  # alpha
     @beta     = +MAX
     @analyzed_depth = -1  # all tree nodes analyzed_depth must be must be calculated relatively to itself
-    @children = nil
+    @children = nil # to differenciate not yet generated and no chidlren at all
     @tree     = tree
   end
 
   def add_child(move)
-    @children ||= []
-    @children << Entry.new(@tree, self, move, -MAX, -1)
+    raise "Entry::add_child: children==nil" if !@children
+    @children << Entry.new(@p, @tree, self, move, -MAX, -1)
   end
 
   def print_children
@@ -29,8 +30,17 @@ class Entry
 
   def sort_children
     @children = @children.sort_by { |c| -c.score}
-    puts "Sorting #{self} children:"
-    print_children
+    #puts "Sorting #{self} children:"
+    #print_children
+  end
+
+  # recursively update and sort children up to the root
+  def update_to_root
+    sort_children
+    best = children.first
+    puts "  setting #{@move} to (#{-best.beta},#{-best.score})"
+    @score, @beta = -best.beta, -best.score # negamax
+    @parent.update_to_root if @parent
   end
 
   def to_s
@@ -38,10 +48,9 @@ class Entry
     "#{@move} (#{@score} for #{@analyzed_depth})"
   end
 
-  # recursively sort children up to the root
   def update_parent(score, beta, depth)
     return if !@parent
-    puts "in update_parent for #{self}"
+    puts "    in update_parent for #{self}"
     @parent.score = score
     @parent.score = beta
     @parent.sort_children
@@ -54,7 +63,7 @@ class Entry
 
   def update(score, beta, depth=nil)
     depth = @tree.pv(self).size if !depth
-    puts "Updating #{self} with score #{score}/#{beta} for depth #{depth}"
+    #puts "   Updating #{self} with score #{score}/#{beta} for depth #{depth}"
     @score = score
     @beta  = beta
     @analyzed_depth = depth
@@ -86,6 +95,15 @@ class Entry
     @parent.depth(rv+1)
   end
 
+  def generate_nodes
+    raise "The position is not ready to generate moves for this node (#{@node})" if @p.history.last and @p.history.last[0].to_s(:xboard) != @move.to_s(:xboard)
+    @children ||= []
+    for m in @p.gen_legal_moves
+      add_child(m)
+    end
+  end
+
+
 end
 
 ########################################################################
@@ -93,22 +111,8 @@ end
 #
 # Algorithm:
 #
-# choose_next_node:
-#   generate all children
-#   evaluate each children
-#   sort them
-#     sort_parents(children[0])
-#   the next node is pv(@root)[-1] => pb: when do we evaluate siblings ?
-#
-#
-# sort_parents(node)
-#   set node.parent alpha, beta to -beta, -alpha
-#   sort parent siblings
-#   sort_parent(parent.siblings[0]) (parent.parent.children[0])
-# end
-#
-#
-#
+# choose_next_node
+
 
 class MoveTree
 
@@ -119,24 +123,42 @@ class MoveTree
 
   def initialize(p,s)
     @p, @s            = p,s
-    @root             = Entry.new(self)
+    @root             = Entry.new(@p, self)
+    @current_node     = @root
   end
 
   def search(max_depth=3, max_time=10)
     @max_depth = max_depth
     @max_time  = max_time
 
-    while(node = choose_next_node) do
-      puts "next node = #{node}. @root.analyzed_depth=#{@root.analyzed_depth}"
-      iterate(node, -MAX, MAX)
+    raise "No more node to analyze" if !@current_node
+
+    begin
+      # get the node played by opponent in the tree
+      @current_node = @current_node.get_child(@p.history.last[0]) if
+        @p.history.last and
+        @p.history.last[0].to_s(:xboard) != @current_node.move.to_s(:xboard)
+
+      while(@current_node = choose_next_node) do
+        puts "** next node = #{@current_node}. @root.analyzed_depth=#{@root.analyzed_depth}"
+        iterate(@current_node, -MAX, MAX)
+        print_tree
+        gets
+      end
+      @current_node = pv(@root)[@p.ply]
+      return [nil,nil] if !@current_node
+    rescue Exception => e
+      puts e
+      puts e.backtrace
+      @p.printp
     end
-    best = pv(@root)[@p.ply] # TODO: keep track of best node....
-    return [nil,nil] if !best
-    [best.move, best.score]
+
+    return [@current_node.move, @current_node.score]
+
   end
 
   def get(depth, index)
-    puts "getting #{depth}, #{index}"
+    puts "    getting #{depth}, #{index}"
     node = pv(@root)[depth]
     raise "get: no node at depth #{depth}" if !node
     c = node.children
@@ -146,26 +168,30 @@ class MoveTree
     rv
   end
 
+  # Algo:
+  #   the next node is
+  #   - either a sibling of the current node
+  #   - or a child of the current node pv(@root)[-1]
   def choose_next_node
     return @root if @root.analyzed_depth == -1
-    # TODO: resort children
-    # maybe in update_parent, not simply from_node.parent.update
-    # see if node score has been decreased, see if we go deeper or choose a sibling
-    #@p.make(from_node.children.first.move)
-    #@p.printp
-    #gets
-    #iterate(from_node.children.first, -b, -a)
-    #@p.unmake
-    nil
+    # TODO: if max_deph is set, and still has time, finish all not evaluated nodes
+    pv(@root)[-1]
   end
 
   # start an iteration from current @p
+  #   generate all children
+  #   evaluate each children
+  #   sort them
+  #     children.first.sort_parents
   def iterate(from_node, a, b)
     puts "\n *** iterate from #{from_node}, at depth #{from_node.depth}. a=#{a}, b=#{b}\n"
     return if !from_node
-    generate_nodes(from_node) if !from_node.children
-    # puts "Nodes: #{@next_node.children.join(", ")}"
+    @p.make(from_node.move) if from_node.parent # !root
+    raise "oops" if (@p.all_whites & @p.all_blacks) > 1
+    @p.printp
+    from_node.generate_nodes if !from_node.children
     return [-MAX, b] if from_node.children.size == 0
+    puts "Nodes: #{from_node.children.join(", ")}"
     #return @s.quiesce(a,b,0) if(depth <= 0)
 
     for node in from_node.children # children are sorted
@@ -173,9 +199,9 @@ class MoveTree
 
       # real search begins here
       @p.make(node.move)
-      print "Evaluating #{node}... "
-      score = @p.eval_position #@s.quiesce(a,b,0)
-      puts "=> #{score}"
+      #print "   Evaluating #{node}... "
+      score = -@s.factor*@p.eval_position #@s.quiesce(a,b,0)
+      #puts "=> #{score}"
       @p.unmake
 
       #if(score >= b) # no beta cutoff possible at depth=1
@@ -187,23 +213,27 @@ class MoveTree
       a = score if(score > a)
       node.update(score, b)
     end
-    from_node.sort_children
+    @p.unmake if from_node.parent
+    raise "oops 2" if (@p.all_whites & @p.all_blacks) > 1
+    from_node.update_to_root
     best = from_node.children.first
-    puts "best node: #{best}"
+    puts "** best node: #{best}"
     from_node.update(-best.beta, -best.score)
     #from_node.parent.update(-beta, -score, @analyzed_depth+1) if @parent
   end
 
-  def generate_nodes(from_node)
-    puts "Generating nodes for #{from_node}"
-    for m in @p.gen_legal_moves
-      from_node.add_child(m)
-    end
-  end
-
   def pv(node, rv=[])
     return rv if not node.children or not node.children[0]
-    rv+pv(node.children[0], [node.children[0]])
+    pv(node.children[0], rv << node.children[0])
+  end
+
+  def pv_str
+    pv(@root).map{|n| "#{n.move.to_s} (#{n.score})"}.join(", ")
+  end
+
+  def print_tree
+    puts "=> Current node: #{@current_node}"
+    puts "   PV: #{pv_str}"
   end
 
 end

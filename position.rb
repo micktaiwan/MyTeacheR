@@ -239,7 +239,7 @@ class Position
   end
 
   def make(move)
-    raise "no move" if move.piece==nil or move.from==nil or move.to==nil
+    raise "make: no move" if !move or move.piece==nil or move.from==nil or move.to==nil
 
     if move.capture
       unset_capture(move)
@@ -389,7 +389,7 @@ class Position
 
   def enpassant_capture_target(move)
     return nil if @bitboards[ENPASSANT] == 0
-    target = indexes(@bitboards[ENPASSANT])[0]
+    target = indexes(@bitboards[ENPASSANT]).first
     return target if move.to == target
     return nil
   end
@@ -437,9 +437,8 @@ class Position
   end
 
   def bitScanForward(bb)
-   raise "empty bb" if (bb == 0)
-   rv = DeBruijn[(((bb & -bb) * DeBruijn64) >> 58) % 64]
-   rv
+   #raise "empty bb" if (bb == 0)
+   DeBruijn[(((bb & -bb) * DeBruijn64) >> 58) % 64]
   end
 
   # give indexes of all ones in the bitboard
