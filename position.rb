@@ -320,6 +320,7 @@ class Position
   def unmake
     move, = @history.pop
     raise "unmake but no move in history" unless move
+    #puts "unmaking #{move}"
 
     if(move.promotion)
       unset(move.promotion, move.to)

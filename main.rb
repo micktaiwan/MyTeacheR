@@ -145,13 +145,15 @@ class MyTeacher
             end
           end
         # inner loop
+        rescue IllegalMoveException => e
+          puts "Illegal move: #{e}"
         rescue  Exception=> e
           puts e
           puts e.backtrace
           @p.load(@dump)
         end
       end
-    # outer loop
+    # outer loop for readline
     rescue  Interrupt=> e # Ctrl-C
       puts
     rescue  Exception=> e

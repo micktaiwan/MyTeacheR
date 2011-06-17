@@ -137,12 +137,12 @@ class MoveTree
 
     begin
       # get the node played by opponent in the tree
-      @current_node = @current_node.get_child(@p.history.last[0]) if
-        @p.history.last and
-        @p.history.last[0].to_s(:xboard) != @current_node.move.to_s(:xboard)
+      if @p.history.last and @p.history.last[0].to_s(:xboard) != @current_node.move.to_s(:xboard)
+        @current_node = @current_node.get_child(@p.history.last[0])
+      end
 
       while(@current_node = choose_next_node) do
-        raise "make: illegal move" if @current_node.parent and not @p.gen_legal_moves.include?(@current_node.move)
+        raise IllegalMoveException.new("make: illegal move") if @current_node.parent and not @p.gen_legal_moves.include?(@current_node.move)
         puts "** next node = #{@current_node}. @root.analyzed_depth=#{@root.analyzed_depth}"
         iterate(@current_node, -MAX, MAX)
         print_tree
@@ -156,7 +156,7 @@ class MoveTree
       @p.printp
     end
 
-    return [@current_node.move, @current_node.score]
+    [@current_node.move, @current_node.score]
 
   end
 
@@ -188,19 +188,11 @@ class MoveTree
   #     children.first.sort_parents
   def iterate(from_node, a, b)
     puts "\n *** iterate from #{from_node}, at depth #{from_node.depth}. a=#{a}, b=#{b}\n"
-    puts @p.side
     return if !from_node
     @p.make(from_node.move) if from_node.parent # !root
-    raise "oops" if (@p.all_whites & @p.all_blacks) > 1
-    puts @p.side
-
-    # TODO: there is a bug here as side should be 0 on the 3rd move
-
-
-    @p.printp
     from_node.generate_nodes if !from_node.children
     return [-MAX, b] if from_node.children.size == 0
-    puts "Nodes: #{from_node.children.join(", ")}"
+    #puts "Nodes: #{from_node.children.join(", ")}"
     #return @s.quiesce(a,b,0) if(depth <= 0)
 
     for node in from_node.children # children are sorted
@@ -212,7 +204,6 @@ class MoveTree
       score = -@s.factor*@p.eval_position #@s.quiesce(a,b,0)
       #puts "=> #{score}"
       @p.unmake
-      raise "oops 1" if (@p.all_whites & @p.all_blacks) > 1
 
       #if(score >= b) # no beta cutoff possible at depth=1
       #  puts "beta cutoff for #{node} at #{score} while beta is #{b}"
@@ -224,7 +215,6 @@ class MoveTree
       node.update(score, b)
     end
     @p.unmake if from_node.parent
-    raise "oops 2" if (@p.all_whites & @p.all_blacks) > 1
 
     from_node.update_to_root
     best = from_node.children.first

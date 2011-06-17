@@ -282,9 +282,9 @@ class Position
       # generate en-passant
       if @bitboards[ENPASSANT] != 0
         passant = indexes(@bitboards[ENPASSANT]).first
-        if    ((p + attack_right) == passant and p % 8 != 7)
+        if    ((p + attack_right) == passant and p % 8 != 7) and (p < second_rank_low or p > second_rank_high)
           moves << Move.new(colored_piece(PAWN,side),p, p+attack_right)
-        elsif ((p + attack_left)  == passant and p % 8 != 0)
+        elsif ((p + attack_left)  == passant and p % 8 != 0) and (p < second_rank_low or p > second_rank_high)
           moves << Move.new(colored_piece(PAWN,side),p, p+attack_left)
         end
       end

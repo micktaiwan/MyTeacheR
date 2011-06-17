@@ -1,3 +1,4 @@
+
 require 'constants'
 
 module MyTeacherUtils
@@ -60,7 +61,9 @@ module MyTeacherUtils
     min = (secs.to_f / 60).floor
     return "#{min}m#{two_digits(round(secs-min*60,1))}" if min < 60
     hour = (min.to_f / 60).floor
-    "#{hour}h#{min-hour*60}m#{two_digits(round(secs-min*60,1))}"
+    return "#{hour}h#{min-hour*60}m#{two_digits(round(secs-min*60,1))}" if hour < 24
+    day = (hour.to_f / 24).floor
+    return "#{day}d#{hour-day*24}h#{min-hour*60}m#{two_digits(round(secs-min*60,1))}"
   end
 
   def two_digits(n)

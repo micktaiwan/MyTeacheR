@@ -93,9 +93,29 @@ describe Position, "(all tests)" do
     #not setting BLACK to play @p.side == BLACK
     @p.make_from_input("d7d5")
     @p.unmake
-    @p.all_pieces.should == INIT_POSITION
-    @p.piece_at(C7).should == BPAWN
+    @p.all_pieces.should    == INIT_POSITION
+    @p.piece_at(C7).should  == BPAWN
+    (@p.all_whites & @p.all_blacks).should == 0
   end
+
+  it "should unmake correctly 4" do
+    @p.reset_to_starting_position
+    @p.change_side # for blacks
+    moves = @p.gen_legal_moves # generate blacks move
+    @p.change_side # and switch back to white
+    moves.each { |m|
+      @p.make(m)
+      @p.unmake
+      @p.all_pieces.should == INIT_POSITION
+      (@p.all_whites & @p.all_blacks).should == 0
+      }
+  end
+
+  it "should unmake correctly 5" do
+    @p.reset_to_starting_position
+    lambda { @p.unmake }.should raise_error
+  end
+
 
   it "should take en passant" do
     @p.load_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1")
