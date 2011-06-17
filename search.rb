@@ -6,6 +6,7 @@ require 'move_tree'
 class Search
 
   include Constants
+  include MyTeacherUtils
 
   attr_reader   :move, :position, :done, :stats, :score
   attr_accessor :debug
@@ -205,7 +206,7 @@ class Search
   end
 
   def quiesce(alpha, beta, depth)
-    stand_pat = factor*evaluate()
+    stand_pat = factor*@p.evaluate()
     #puts "Quiescing... d=#{depth}, stand pat = #{stand_pat}"
     return beta if( stand_pat >= beta )
 

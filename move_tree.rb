@@ -5,7 +5,7 @@ class Entry
 
   include Constants
 
-  attr_reader   :parent, :children, :move, :analyzed_depth, :beta
+  attr_reader   :parent, :children, :move, :analyzed_depth
   attr_accessor :score
 
   def initialize(p, tree, parent=nil, move=nil, score=-MAX, adepth=0)
@@ -13,7 +13,6 @@ class Entry
     @parent   = parent
     @move     = move
     @score    = score  # alpha
-    @beta     = +MAX
     @analyzed_depth = -1  # all tree nodes analyzed_depth must be must be calculated relatively to itself
     @children = nil # to differenciate not yet generated and no chidlren at all
     @tree     = tree
@@ -38,8 +37,8 @@ class Entry
   def update_to_root(depth=0)
     sort_children
     best = children.first
-    puts "  setting #{self} to (#{-best.beta},#{-best.score})"
-    @score, @beta = -best.beta, -best.score # negamax
+    puts "  setting #{self} to #{-best.score}"
+    @score = -best.score # negamax
     @analyzed_depth = depth
     @parent.update_to_root(depth+1) if @parent
   end
@@ -49,27 +48,10 @@ class Entry
     "#{@move} (#{@score} for #{@analyzed_depth})"
   end
 
-  def update_parent(score, beta, depth)
-    return if !@parent
-    puts "    in update_parent for #{self}"
-    @parent.score = score
-    @parent.score = beta
-    @parent.sort_children
-    @parent.analyzed_depth = depth
-    if @parent.parent # not root move
-      @parent.update(-@parent.children.first.score, @analyzed_depth)
-      @parent.parent.update_parent(-beta, -score, depth-1)
-    end
-  end
-
-  def update(score, beta, depth=nil)
+  def update(score, depth=nil)
     depth = @tree.pv(self).size if !depth
-    #puts "   Updating #{self} with score #{score}/#{beta} for depth #{depth}"
     @score = score
-    @beta  = beta
     @analyzed_depth = depth
-    # TODO: I'm not sure this is right....
-    # @parent.update(-beta, -score, @analyzed_depth+1) if @parent
   end
 
   # update (or add) a child and sort it relative to its score
@@ -86,9 +68,16 @@ class Entry
     nil
   end
 
-  # return the next sibling with highest score for the given depth
-  def next_sibling(depth)
-    @children.select { |c| c.analyzed_depth < depth }.first
+  # itself included
+  def weak_siblings(depth)
+    return [] if !@parent
+    @parent.children.select { |c| c.analyzed_depth < depth }
+  end
+
+  # itself included
+  def strong_siblings(depth)
+    return [] if !@parent
+    @parent.children.select { |c| c.analyzed_depth >= depth }
   end
 
   def depth(rv=0)
@@ -126,38 +115,68 @@ class MoveTree
   def initialize(p,s)
     @p, @s            = p,s
     @root             = Entry.new(@p, self)
-    @current_node     = @root
+    @current_node     = @root # current analyzed node
+    @current_pos_node = @root # current position last played move
+    @stack            = []
   end
 
   def search(max_depth=3, max_time=10)
     @max_depth = max_depth
     @max_time  = max_time
 
-    raise "No more node to analyze" if !@current_node
-
-    begin
+    #begin
       # get the node played by opponent in the tree
-      if @p.history.last and @p.history.last[0].to_s(:xboard) != @current_node.move.to_s(:xboard)
-        @current_node = @current_node.get_child(@p.history.last[0])
+      if @p.history.last and @p.history.last[0].to_s(:xboard) != @current_pos_node.move.to_s(:xboard)
+        @current_pos_node = @current_pos_node.get_child(@p.history.last[0])
       end
 
       while(@current_node = choose_next_node) do
-        raise IllegalMoveException.new("make: illegal move") if @current_node.parent and not @p.gen_legal_moves.include?(@current_node.move)
-        puts "** next node = #{@current_node}. @root.analyzed_depth=#{@root.analyzed_depth}"
-        iterate(@current_node, -MAX, MAX)
-        print_tree
+        prepare_position
+        #raise IllegalMoveException.new("make: illegal move") if @current_node.parent and not @p.gen_legal_moves.include?(@current_node.move)
+        puts "** current node = #{@current_node}. @root.analyzed_depth=#{@root.analyzed_depth}"
         gets
+        get_children_score(@current_node)
+        @current_node.update_to_root
+        #print_tree
       end
-      @current_node = pv(@root)[@p.ply]
-      return [nil,nil] if !@current_node
-    rescue Exception => e
-      puts e
-      puts e.backtrace
-      @p.printp
+      puts @p.ply
+      @current_pos_node = @current_node = pv(@root)[@p.ply]
+      return [nil,nil] if !@current_pos_node
+    #rescue Exception => e
+    #  puts e
+    #  puts e.backtrace
+    #  @p.printp
+    #end
+
+    [@current_pos_node.move, @current_pos_node.score]
+
+  end
+
+  # unmake and make moves
+  def prepare_position
+    unmake_stack
+    build_stack
+    @current_node.generate_nodes if !@current_node.children
+  end
+
+  def unmake_stack
+    @stack.size.times { @p.unmake }
+  end
+
+  # build a move stack from @current_pos_node to @current_node and make the moves
+  def build_stack
+    @stack = Array.new
+    n = @current_node
+    while(n.parent and n.to_s != @current_pos_node.to_s) do
+      @stack << n
+      n = n.parent
+      puts "building #{n}"
     end
-
-    [@current_node.move, @current_node.score]
-
+    @stack.reverse!
+    @stack.each { |n|
+      puts "=> #{n}"
+      @p.make(n.move)
+      }
   end
 
   def get(depth, index)
@@ -172,55 +191,37 @@ class MoveTree
   end
 
   # Algo:
-  #   the next node is
-  #   - either a sibling of the current node
-  #   - or a child of the current node pv(@root)[-1]
+  #   the next node is either
+  #   - a sibling of the current node
+  #   - a child of the current node
+  #   -
+  # TODO: if max_deph is set, and still has time, finish all not evaluated nodes
   def choose_next_node
-    return @root if @root.analyzed_depth == -1
-    # TODO: if max_deph is set, and still has time, finish all not evaluated nodes
-    pv(@root)[-1]
+    return @current_pos_node if @current_pos_node.analyzed_depth == -1
+    puts "choosing next: current node #{@current_node} adepth: #{@current_node.analyzed_depth}"
+
+    # evaluate next sibling
+    #   if the current depth is not deep enough,
+    #   if the count of analyzed siblings if not enough
+    next_sibling = @current_node.weak_siblings(1).first
+    puts "next_sibling=#{next_sibling}"
+    return next_sibling if next_sibling and
+      @current_pos_node.analyzed_depth < ReductionLimit or
+      @current_node.strong_siblings(1).size < FullDepthMoves
+    # else....
+    puts "choosing to deepen"
+    pv(@current_node)[-1]
   end
 
-  # start an iteration from current @p
-  #   generate all children
-  #   evaluate each children
-  #   sort them
-  #     children.first.sort_parents
-  def iterate(from_node, a, b)
-    puts "\n *** iterate from #{from_node}, at depth #{from_node.depth}. a=#{a}, b=#{b}\n"
-    return if !from_node
-    @p.make(from_node.move) if from_node.parent # !root
-    from_node.generate_nodes if !from_node.children
-    return [-MAX, b] if from_node.children.size == 0
-    #puts "Nodes: #{from_node.children.join(", ")}"
-    #return @s.quiesce(a,b,0) if(depth <= 0)
-
+  def get_children_score(from_node)
+    return -MAX if from_node.children.size == 0
     for node in from_node.children # children are sorted
-      #puts "\nnext node is #{node}"
-
-      # real search begins here
       @p.make(node.move)
-      #print "   Evaluating #{node}... "
-      score = -@s.factor*@p.eval_position #@s.quiesce(a,b,0)
-      #puts "=> #{score}"
+      score = -@s.quiesce(-MAX,+MAX,0) # TODO: not -MAX, +MAX
       @p.unmake
-
-      #if(score >= b) # no beta cutoff possible at depth=1
-      #  puts "beta cutoff for #{node} at #{score} while beta is #{b}"
-      #  a = b
-      #  node.update(score, b)
-      #  break
-      #end
-      a = score if(score > a)
-      node.update(score, b)
+      node.update(score, 0)
+      # TODO: beta cutoff is when one score of the children > -from_node.score
     end
-    @p.unmake if from_node.parent
-
-    from_node.update_to_root
-    best = from_node.children.first
-    puts "** best node: #{best}"
-    #from_node.update(-best.beta, -best.score)
-    #from_node.parent.update(-beta, -score, @analyzed_depth+1) if @parent
   end
 
   def pv(node, rv=[])
