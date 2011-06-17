@@ -12,7 +12,7 @@ class MyTeacher
 
   # TODO externalize this string
   # TODO: plan version and their content ?
-  ProgramVersion = "MyTeacheR - v0.1 - 14 June 2011"
+  ProgramVersion = "MyTeacheR - v0.1 - 17 June 2011"
   include MyTeacherUtils
 
   Pre_perft = {
@@ -29,7 +29,7 @@ class MyTeacher
     }
 
   CLIST = [
-    'play', 'unmake', 'show', 'help',
+    'play', 'unmake', 'show', 'help', 'history',
     'reset', 'load fen ', 'solo', 'quit', 'exit',
     'best on', 'best off', 'moves',
     'perft ', 'divide ', 'test ', 'ptest', 'xboard'
@@ -50,6 +50,7 @@ class MyTeacher
     puts "play/[Enter]......forces computer to play this position"
     puts "unmake............back up one move"
     puts "show..............print the board"
+    puts "history...........print moves history"
     puts "xboard............launch a graphical interface (if xboard is installed)"
     puts
     puts "********* UTILS"
@@ -89,6 +90,8 @@ class MyTeacher
             puts "move: #{@s.move}, score = #{@s.score}, #{pretty_time(Time.now()-start)}"
             @p.printp
             puts "#{@p.side==WHITE ? "Blacks":"Whites"} win !" if !can_move
+          when input=="history"
+            @p.print_moves(@p.history.map{ |m| m[0]})
           when input=="reset"
             @p.reset_to_starting_position
             @p.printp
@@ -128,7 +131,6 @@ class MyTeacher
           else # move
             input.gsub!(/\?/, '')
             begin
-              puts "test"
               @p.make_from_input(input)
               @p.change_side if color(@p.history.last[0].piece) == @p.side # this test allow to move the same color 2 times (not real chess!)
               @p.printp

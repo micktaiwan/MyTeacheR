@@ -35,12 +35,13 @@ class Entry
   end
 
   # recursively update and sort children up to the root
-  def update_to_root
+  def update_to_root(depth=0)
     sort_children
     best = children.first
-    puts "  setting #{@move} to (#{-best.beta},#{-best.score})"
+    puts "  setting #{self} to (#{-best.beta},#{-best.score})"
     @score, @beta = -best.beta, -best.score # negamax
-    @parent.update_to_root if @parent
+    @analyzed_depth = depth
+    @parent.update_to_root(depth+1) if @parent
   end
 
   def to_s
@@ -111,9 +112,10 @@ end
 #
 # Algorithm:
 #
-# choose_next_node
-
-
+# iteratively search deeper
+# choose_next_node (contains the pruning or deepening and is the real intelligence)
+# generate all children and evaluate the position for each of them
+#
 class MoveTree
 
   include Constants
@@ -140,6 +142,7 @@ class MoveTree
         @p.history.last[0].to_s(:xboard) != @current_node.move.to_s(:xboard)
 
       while(@current_node = choose_next_node) do
+        raise "make: illegal move" if @current_node.parent and not @p.gen_legal_moves.include?(@current_node.move)
         puts "** next node = #{@current_node}. @root.analyzed_depth=#{@root.analyzed_depth}"
         iterate(@current_node, -MAX, MAX)
         print_tree
@@ -185,9 +188,15 @@ class MoveTree
   #     children.first.sort_parents
   def iterate(from_node, a, b)
     puts "\n *** iterate from #{from_node}, at depth #{from_node.depth}. a=#{a}, b=#{b}\n"
+    puts @p.side
     return if !from_node
     @p.make(from_node.move) if from_node.parent # !root
     raise "oops" if (@p.all_whites & @p.all_blacks) > 1
+    puts @p.side
+
+    # TODO: there is a bug here as side should be 0 on the 3rd move
+
+
     @p.printp
     from_node.generate_nodes if !from_node.children
     return [-MAX, b] if from_node.children.size == 0
@@ -203,6 +212,7 @@ class MoveTree
       score = -@s.factor*@p.eval_position #@s.quiesce(a,b,0)
       #puts "=> #{score}"
       @p.unmake
+      raise "oops 1" if (@p.all_whites & @p.all_blacks) > 1
 
       #if(score >= b) # no beta cutoff possible at depth=1
       #  puts "beta cutoff for #{node} at #{score} while beta is #{b}"
@@ -215,10 +225,11 @@ class MoveTree
     end
     @p.unmake if from_node.parent
     raise "oops 2" if (@p.all_whites & @p.all_blacks) > 1
+
     from_node.update_to_root
     best = from_node.children.first
     puts "** best node: #{best}"
-    from_node.update(-best.beta, -best.score)
+    #from_node.update(-best.beta, -best.score)
     #from_node.parent.update(-beta, -score, @analyzed_depth+1) if @parent
   end
 

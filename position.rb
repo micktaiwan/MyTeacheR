@@ -411,9 +411,9 @@ class Position
       @bitboards[ENPASSANT] = 0
       return
     end
-    if move.piece == BPAWN and move.from > 47 and move.from < 56 and (move.from - move.to).abs == 16
+    if move.piece == BPAWN and (move.from - move.to).abs == 16 # and move.from > 47 and move.from < 56
       @bitboards[ENPASSANT] = ( 1 << (move.from-8))
-    elsif move.piece == WPAWN and move.from > 7 and move.from < 16 and (move.from - move.to).abs == 16
+    elsif move.piece == WPAWN and (move.from - move.to).abs == 16 # and move.from > 7 and move.from < 16
       @bitboards[ENPASSANT] = ( 1 << (move.from+8))
     else
       @bitboards[ENPASSANT] = 0
