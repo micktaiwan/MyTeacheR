@@ -7,12 +7,22 @@
 require 'position'
 require 'search'
 require 'readline'
+begin
+  require 'rubygems'
+  require 'graphviz'
+  $graphiz = true
+rescue Exception => e
+  $graphiz = false
+  puts "*** No graphiz library -- For tree vizualisation, install GraphViz and ruby-graphiz gem"
+  puts
+end
+
 
 class MyTeacher
 
   # TODO externalize this string
   # TODO: plan version and their content ?
-  ProgramVersion = "MyTeacheR - v0.1 - 17 June 2011"
+  ProgramVersion = "MyTeacheR - v0.11 - 18 June 2011 - with move_tree almost working"
   include MyTeacherUtils
 
   Pre_perft = {
@@ -31,7 +41,7 @@ class MyTeacher
   CLIST = [
     'play', 'unmake', 'show', 'help', 'history',
     'reset', 'load fen ', 'solo', 'quit', 'exit',
-    'best on', 'best off', 'moves',
+    'best on', 'best off', 'moves', 'graph',
     'perft ', 'divide ', 'test ', 'ptest', 'xboard'
     ].sort
 
@@ -115,6 +125,8 @@ class MyTeacher
             @p.gen_legal_moves.sort_by {|m| m.to_s}.each do |m|
               puts "#{m.to_s}: #{m.inspect}"
             end
+          when input=="graph"
+            graph
           when input=="solo"
             solo
           when input[0..5]=="divide"
@@ -324,6 +336,30 @@ class MyTeacher
     ensure
       @p.load(@dump)
     end
+  end
+
+  def graph_node(n, parent=nil, depth=0)
+    print n, " "
+    gn = @g.add_node(n.to_s + "_" + rand (1000).to_s)
+    @g.add_edge(parent, gn) if parent
+    if n == @s.tree.current_pos_node
+      gn[:color] = "red"
+      gn[:style] = "filled"
+    end
+    return if !n.children # or depth == 2
+    i = 0
+    for c in n.children
+      graph_node(c, gn, depth+1)
+      i += 1
+      break if i > 2
+    end
+  end
+
+  def graph
+    @g = GraphViz::new("G")
+    graph_node(@s.tree.root)
+    puts
+    @g.output(:svg => "test.svg")
   end
 
 end

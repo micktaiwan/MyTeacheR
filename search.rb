@@ -8,7 +8,7 @@ class Search
   include Constants
   include MyTeacherUtils
 
-  attr_reader   :move, :position, :done, :stats, :score
+  attr_reader   :move, :position, :done, :stats, :score, :tree
   attr_accessor :debug
 
   def initialize(position, stats=nil)
@@ -55,7 +55,7 @@ class Search
   end
 
   def iterative_start
-    return @tree.search(2)
+    return @tree.search(3)
     return iterate(-MAX, MAX, 3)
 
     #@moves = [] # store PV
@@ -98,9 +98,6 @@ class Search
       @stats.inc_turn_nodes
       @p.make(m)
       score = -negamax(-b, -a, depth-1)
-      #puts "move: #{m}"
-      #puts "score: #{score}"
-      #@p.printp
       @p.unmake
       #return [score, m] if( score >= b )
       if( score > a )
