@@ -61,6 +61,12 @@ describe Position, "(all tests)" do
     @p.all_pieces.should == INIT_POSITION
   end
 
+  it "should generate 20 moves at starting position" do
+    @p.reset_to_starting_position
+    moves = @p.gen_legal_moves
+    moves.size.should eq 20
+  end
+
   it "should move the pieces correctly" do
     @p.piece_at(C3).should eq nil
     move = Move.new(KNIGHT, B1, C3)

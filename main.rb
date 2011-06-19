@@ -7,15 +7,6 @@
 require 'position'
 require 'search'
 require 'readline'
-begin
-  require 'rubygems'
-  require 'graphviz'
-  $graphiz = true
-rescue Exception => e
-  $graphiz = false
-  puts "*** No graphiz library -- For tree vizualisation, install GraphViz and ruby-graphiz gem"
-  puts
-end
 
 
 class MyTeacher
@@ -73,6 +64,7 @@ class MyTeacher
     puts
     puts "********* DEBUG AND TEST"
     puts "moves.............print all possible next moves for this position"
+    puts "graph.............output a graph of possible moves currently in search tree"
     puts "perft <n>.........display Perft(n)"
     puts "divide <n>........display Divide(n)"
     puts "test <n>..........generate all possible moves for a suite of positions at depth n"
@@ -126,7 +118,7 @@ class MyTeacher
               puts "#{m.to_s}: #{m.inspect}"
             end
           when input=="graph"
-            graph
+            @s.tree.graph
           when input=="solo"
             solo
           when input[0..5]=="divide"
@@ -336,30 +328,6 @@ class MyTeacher
     ensure
       @p.load(@dump)
     end
-  end
-
-  def graph_node(n, parent=nil, depth=0)
-    print n, " "
-    gn = @g.add_node(n.to_s + "_" + rand (1000).to_s)
-    @g.add_edge(parent, gn) if parent
-    if n == @s.tree.current_pos_node
-      gn[:color] = "red"
-      gn[:style] = "filled"
-    end
-    return if !n.children # or depth == 2
-    i = 0
-    for c in n.children
-      graph_node(c, gn, depth+1)
-      i += 1
-      break if i > 2
-    end
-  end
-
-  def graph
-    @g = GraphViz::new("G")
-    graph_node(@s.tree.root)
-    puts
-    @g.output(:svg => "test.svg")
   end
 
 end

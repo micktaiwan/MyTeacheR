@@ -4,16 +4,16 @@ class Move
   include Constants
   include MyTeacherUtils
 
-	attr_accessor :piece, :from, :to, :capture, :promotion, :can_castle, :enpassant
+        attr_accessor :piece, :from, :to, :capture, :promotion, :can_castle, :enpassant
 
   def initialize(piece=nil, from=nil, to=nil, capture=nil, promotion=nil, can_castle=nil, enpassant=nil)
-		@piece      = piece # WKING to BPAWN
+                @piece      = piece # WKING to BPAWN
     @from       = from
     @to         = to
-		@capture    = capture # WKING to BPAWN
-		@promotion  = promotion # WQUEEN..WBISHOP AND BQUEEN..BBISHOP
-		@can_castle = can_castle
-		@enpassant  = enpassant
+                @capture    = capture # WKING to BPAWN
+                @promotion  = promotion # WQUEEN..WBISHOP AND BQUEEN..BBISHOP
+                @can_castle = can_castle
+                @enpassant  = enpassant
   end
 
   def set(from, to)
@@ -23,9 +23,9 @@ class Move
   def to_s(notation=:legible) # FIXME: promotion can be upcase or downcase, is it a good notation principle ?
     case notation
     when :legible
-    "#{piece_to_symbol(@piece)}#{SQUARENAME[@from]}#{@capture == nil ? "":"x"}#{SQUARENAME[@to]}#{@promotion ? SYMBOLS[@promotion].upcase : ""}"
+      "#{piece_to_symbol(@piece)}#{SQUARENAME[@from]}#{@capture == nil ? "":"x"}#{SQUARENAME[@to]}#{@promotion ? SYMBOLS[@promotion].upcase : ""}"
     when :xboard
-    "#{SQUARENAME[@from]}#{SQUARENAME[@to]}#{@promotion ? SYMBOLS[@promotion].upcase : ""}"
+      "#{SQUARENAME[@from]}#{SQUARENAME[@to]}#{@promotion ? SYMBOLS[@promotion].upcase : ""}"
     end
   end
 
@@ -44,12 +44,12 @@ class Move
 
   #def inverse
   #  m             = Move.new
-	#	m.piece       = @piece
+        #       m.piece       = @piece
   #  m.from        = @to
   #  m.to          = @from
-	#	m.capture     = @capture
-	#	m.promotion   = @promotion
-	#	m
+        #       m.capture     = @capture
+        #       m.promotion   = @promotion
+        #       m
   #end
 
 end

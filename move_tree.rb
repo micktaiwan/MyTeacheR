@@ -1,4 +1,13 @@
 require 'constants'
+begin
+  require 'rubygems'
+  require 'graphviz'
+  $graphiz = true
+rescue Exception => e
+  $graphiz = false
+  puts "*** No graphiz library -- For tree vizualisation, install GraphViz and ruby-graphiz gem"
+  puts
+end
 
 # A move tree entry
 class Entry
@@ -34,7 +43,7 @@ class Entry
   end
 
   def sort_children
-    @children = @children.sort_by { |c| -c.score}
+    @children = @children.sort_by { |c| [-c.analyzed_depth, -c.score]}
     #puts "Sorting #{self} children:"
     #print_children
   end
@@ -44,14 +53,19 @@ class Entry
     sort_children
     best = children.first
     #puts "  setting #{self} to (#{-best.score} for #{depth})"
-    @score = -best.score # negamax
+    @score = -best.score if best # negamax
     @analyzed_depth = depth
     @parent.update_to_root(depth+1) if @parent
   end
 
   def to_s
-    return "root" if !@move
-    "#{@move} (#{@score} for #{@analyzed_depth})"
+    return "root (#{@score}/#{@analyzed_depth})" if !@move
+    "#{@move} (#{@score}/#{@analyzed_depth})"
+  end
+
+  def to_graphviz
+    return "{root|{#{@score}/#{@analyzed_depth}}}" if !@move
+    "{#{@move}|{#{@score}/#{@analyzed_depth}}}"
   end
 
   def update(score, depth=nil)
@@ -91,7 +105,7 @@ class Entry
     @parent.depth(rv+1)
   end
 
-  def generate_nodes
+  def generate_children
     #raise "no move for entry #{self}" if !@move
     #raise "The position is not ready to generate moves for this node (#{@move})" if @p.history.last and @p.history.last[0].to_s(:xboard) != @move.to_s(:xboard)
     if !@children
@@ -112,13 +126,16 @@ class Entry
   end
 
   def clear
-    if children
-      for c in children
+    if @children
+      for c in @children
         c.clear
       end
-      children.clear # Array#clear
-      children = nil
+      @children.clear # Array#clear
+      @children = nil
     end
+    @analyzed_depth = -1
+    @score          = -MAX
+    @complete       = nil
   end
 
 end
@@ -153,19 +170,24 @@ class MoveTree
   def search(max_depth=3, max_time=10)
     @max_depth = max_depth
     @max_time  = max_time
-    generate_until_history
+    #@stack.clear # as we could do a @current_move = @current_pos_node, but still preparing the position with some @p.unmake.... due to the stack being
+    generate_until_history # FIXME: generate some bugs with unmake: play, play, unmake, d7d5, play => bug !
+    best_depth = 0
     while(@current_node = choose_next_node) do
       prepare_position
-      @p.printp
-      #raise IllegalMoveException.new("make: illegal move") if @current_node.parent and not @p.gen_legal_moves.include?(@current_node.move)
-      puts "** current node = #{@current_node}. @root.analyzed_depth=#{@root.analyzed_depth}"
-      get_children_score(@current_node)
+      #puts "** current node = #{@current_node}. @root.analyzed_depth=#{@root.analyzed_depth}"
+      get_children_score(@current_node) # this is the iteration
       @current_node.update_to_root
-      print_tree
+      depth = @current_pos_node.analyzed_depth
+      if(depth > best_depth)
+        best_depth = depth
+        puts "depth: #{best_depth}"
+        print_pv
+      end
     end
     unmake_stack
-    puts @p.ply
-    @current_pos_node = @current_node = pv(@current_pos_node)[0]
+    @current_pos_node = @current_node = @current_pos_node.children.first # pv(@current_pos_node)[0]
+    raise IllegalMoveException if @p.history.last and move_str(@current_node.parent) != @p.history.last[0]
     return [nil,nil] if !@current_pos_node
     [@current_pos_node.move, @current_pos_node.score]
   end
@@ -177,6 +199,7 @@ class MoveTree
   def generate_until_history
     last = @p.history.last
     if !last # if no history, just stop
+      puts "Info: no history, clearing tree"
       clear
       @current_move = @current_pos_node = @root
       return
@@ -193,12 +216,25 @@ class MoveTree
       break if index < 0
     end
 
-    if index< 0 # move not found in tree
+    if index< 0 # @current_pos_node is not a history move
+      # try brute force
+      parent = @p.history[-2]
+      parent = parent[0] if parent
+      n = find(last[0], parent)
+      if n
+        puts "Info: found move #{n} in tree"
+        @current_move = @current_pos_node = n
+        return
+      end
+      # else clear the tree
+      puts "Info: move #{last[0]} not found in tree, clearing tree"
       clear
-      @current_move = @current_pos_node = @root
+      n = @root.add_child(last[0])
+      @current_move = @current_pos_node = n
       return
     end
 
+    # else @current_pos_node is a move in history, so generate missing move in tree
     n = @current_pos_node
     for i in index..size-1
       n = n.add_child(@p.history[i][0])
@@ -210,43 +246,50 @@ class MoveTree
   def prepare_position
     unmake_stack
     build_stack
-    @current_node.generate_nodes if !@current_node.children
   end
 
   # Algo:
   #   the next node is either
   #   - a sibling of the current node
   #   - a child of the current node
-  #   -
-  # TODO: if max_deph is set, and still has time, finish all not evaluated nodes
+  #   - TODO: another node ?
+  # TODO: if max_depth is set, and still has time, finish all not evaluated nodes
   def choose_next_node
     return @current_pos_node if @current_pos_node.analyzed_depth == -1
-    puts "choosing next: current node #{@current_node} adepth: #{@current_node.analyzed_depth}"
+    return nil if @current_node.score >= MAX # check_mate
+    #puts "choosing next: current node #{@current_node} adepth: #{@current_node.analyzed_depth}"
 
     # evaluate next sibling
     #   if the current depth is not deep enough,
     #   if the count of analyzed siblings if not enough
-    #@p.print_moves(@current_node.weak_siblings(1))
     next_sibling = @current_node.weak_siblings(1).first
-    puts "next_sibling=#{next_sibling}"
     return next_sibling if next_sibling and
       (@current_pos_node.analyzed_depth <= ReductionLimit or
       @current_node.strong_siblings(1).size < FullDepthMoves)
 
-    return nil if @current_pos_node.analyzed_depth > @max_depth
+    if @current_pos_node.analyzed_depth >= @max_depth
+      # TODO: deepen moves giving check
+      return nil # that was the last node !
+    end
 
-    puts "!!! choosing to deepen"
-    #gets
+    #return nil if @current_node == pv(@current_pos_node)[-1]
+    #puts "!!! choosing to deepen #{pv(@current_pos_node)[-1]}"
     pv(@current_pos_node)[-1]
   end
 
-  def get_children_score(from_node)
-    return -MAX if from_node.children.size == 0
-    for node in from_node.children # children are sorted
-      @p.make(node.move)
-      score = -@s.quiesce(-MAX,+MAX,0) # TODO: not -MAX, +MAX
+  def get_children_score(node)
+    node.generate_children if !node.children
+    if node.children.size == 0
+      node.update(MAX, 0)
+      return
+    end
+    # graph(node.move.to_s) # clear tree, so children too !!
+    for child in node.children # children are sorted
+      @p.make(child.move)
+      #puts "making #{child.move}"
+      score = -@s.quiesce(-MAX, MAX,0) # FIXME: not even sure it is right
       @p.unmake
-      node.update(score, 0)
+      child.update(score, 0)
       # TODO: beta cutoff is when one score of the children > -from_node.score
     end
   end
@@ -260,37 +303,98 @@ class MoveTree
     pv(@current_pos_node).map{|n| "#{n.move.to_s} (#{n.score})"}.join(", ")
   end
 
-  def print_tree
+  def print_pv
     puts "PV: #{pv_str}"
-    puts "=> #{@current_node}"
   end
+
   def unmake_stack
     @stack.size.times { @p.unmake }
+    #@stack.each { |n|
+    #  puts "unmaking #{n}"
+    #  @p.unmake
+    #  }
     @stack.clear
   end
 
   # build a move stack from @current_pos_node to @current_node and make the moves
   def build_stack
     n = @current_node
-    while(n.parent and n.to_s != @current_pos_node.to_s) do
+    #puts
+    #puts "from #{@current_pos_node} to #{n}"
+    while(n.parent and n.move.to_s != @current_pos_node.move.to_s) do
       @stack << n
       n = n.parent
     end
     @stack.reverse!
     @stack.each { |n|
+      #puts "making #{n}"
       @p.make(n.move)
       }
   end
 
-  def get(depth, index)
-    puts "    getting #{depth}, #{index}"
-    node = pv(@root)[depth]
-    raise "get: no node at depth #{depth}" if !node
-    c = node.children
-    raise "get: no children for node #{node}" if !c
-    rv = c[index]
-    raise "get: no child at index #{index}" if !rv
-    rv
+  #def get(depth, index)
+  #  puts "getting #{depth}, #{index}"
+  #  node = pv(@root)[depth]
+  #  raise "get: no node at depth #{depth}" if !node
+  #  c = node.children
+  #  raise "get: no children for node #{node}" if !c
+  #  rv = c[index]
+  #  raise "get: no child at index #{index}" if !rv
+  #  rv
+  #end
+
+  def move_str(node)
+    return "" if !node or !node.move
+    node.move.to_s(:xboard)
+  end
+
+  def find_child(node, move, parent_move)
+    return node if move_str(node) == move.to_s(:xboard) and
+      (!parent_move or move_str(node.parent) == parent_move.to_s(:xboard))
+    return nil if !node.children
+    for c in node.children
+      n = find_child(c, move, parent_move)
+      return n if n
+    end
+    return nil
+  end
+
+  def find(move, parent_move=nil)
+    find_child(@root, move, parent_move)
+  end
+
+  def graph_node(n, parent=nil, depth=0)
+    #print n, " "
+    gn = @g.add_node(n.object_id.to_s, :label=>n.to_graphviz, :shape=>"Mrecord")
+    @g.add_edge(parent, gn) if parent
+    if n == @current_pos_node
+      gn[:color] = "brown3"
+      gn[:style] = "filled"
+    elsif @s.tree.pv(@current_pos_node).include?(n)
+      gn[:color] = "cadetblue"
+      gn[:style] = "filled"
+    end
+    return if !n.children # or depth == 2
+    i = 0
+    for c in n.children
+      graph_node(c, gn, depth+1)
+      i += 1
+      #break if i > 2
+    end
+  end
+
+  def graph(name="tree")
+    @g = GraphViz::new("G")
+    #@g["overlap"] = "compress"
+    #@g["rankdir"] = "BT"
+    @g["size"] = "350,350"
+    #@g["ratio"] = "0.9"
+    generate_until_history # FIXME: while doing ptest, it bugs
+    n = @current_pos_node
+    n = n.parent ? n.parent : n
+    graph_node(n) #@s.tree.root
+    #puts
+    @g.output(:svg => "#{name}.svg")
   end
 
 end
