@@ -25,9 +25,8 @@ class Position
   end
 
   def gen_legal_captures(side=@side)
-    m = gen_moves(side)
-    m = m.select { |m| m.capture != nil }
-    prune_king_revealers(side,m)
+    # FIXME: gen_moves is somewhat brute force....
+    prune_king_revealers(side, gen_moves(side).select{|m|m.capture != nil})
   end
 
   # private
@@ -293,13 +292,14 @@ class Position
   end
 
   def gen_castle_moves(side, king_index)
+    return [] if in_check?(king_index, side)
     goodcastles = []
     # kingside
     kpiece = colored_piece(KING,side)
     if can_castle(side, KINGSIDE)
-      test = if(side==BLACK) then [60,61,62]; else [4,5,6] end
+      test = if(side==BLACK) then [61,62]; else [5,6] end
 
-      if !piece_at(test[1]) and !piece_at(test[2]) # TODO: something like if (!(maskF1G1 & ~occupiedSquares))
+      if !piece_at(test[0]) and !piece_at(test[1]) # TODO: something like if (!(maskF1G1 & ~occupiedSquares))
         # FIXME: repeated code
         left = prune_king_revealers(side, test.map {|dest| Move.new(kpiece, king_index, dest)})
         goodcastles << Move.new(kpiece, king_index, test.last) if left.size == test.size
@@ -310,14 +310,14 @@ class Position
     # queenside
     if can_castle(side, QUEENSIDE)
       if(side==BLACK)
-        test = [60,59,58]
+        test = [59,58]
         extra = 57
       else
-        test = [4,3,2]
+        test = [3,2]
         extra = 1
       end
 
-      if !piece_at(test[1]) and !piece_at(test[2]) and !piece_at(extra) # TODO: something like if (!(maskF1G1 & ~occupiedSquares))
+      if !piece_at(test[0]) and !piece_at(test[1]) and !piece_at(extra) # TODO: something like if (!(maskF1G1 & ~occupiedSquares))
         # FIXME: repeated code
         left = prune_king_revealers(side, test.map {|dest| Move.new(kpiece, king_index, dest)})
         goodcastles << Move.new(kpiece, king_index, test.last) if left.size == test.size

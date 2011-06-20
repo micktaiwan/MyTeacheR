@@ -187,7 +187,10 @@ class MoveTree
     end
     unmake_stack
     @current_pos_node = @current_node = @current_pos_node.children.first # pv(@current_pos_node)[0]
-    raise IllegalMoveException if @p.history.last and move_str(@current_node.parent) != @p.history.last[0]
+    if @p.history.last and @current_node and move_str(@current_node.parent) != @p.history.last[0].to_s(:xboard)
+      graph("bug1")
+      raise IllegalMoveException.new("#{move_str(@current_node.parent)} != #{@p.history.last[0].to_s(:xboard)}")
+    end
     return [nil,nil] if !@current_pos_node
     [@current_pos_node.move, @current_pos_node.score]
   end
@@ -218,15 +221,19 @@ class MoveTree
 
     if index< 0 # @current_pos_node is not a history move
       # try brute force
-      parent = @p.history[-2]
-      parent = parent[0] if parent
-      n = find(last[0], parent)
-      if n
-        puts "Info: found move #{n} in tree"
-        @current_move = @current_pos_node = n
-        return
-      end
+
+      # FIXME: BUGGY because of lazy find. Start from ply
+      #parent = @p.history[-2]
+      #parent = parent[0] if parent
+      #n = find(last[0], parent)
+      #if n
+      #  puts "Info: found move #{n} in tree"
+      #  @current_move = @current_pos_node = n
+      #  return
+      #end
+
       # else clear the tree
+      # FIXME: should never happen, find the move, or one of his ancestor !
       puts "Info: move #{last[0]} not found in tree, clearing tree"
       clear
       n = @root.add_child(last[0])
@@ -242,22 +249,24 @@ class MoveTree
     @current_node = @current_pos_node = n
   end
 
-  # unmake and make moves
-  def prepare_position
-    unmake_stack
-    build_stack
-  end
-
-  # Algo:
+  # assuming @current_node and @current_pos_node are set correctly
+  #   to current_node in tree and node that led to the current position
+  # algo:
   #   the next node is either
   #   - a sibling of the current node
   #   - a child of the current node
+  #   - a parent's sibling in case of beta cutoff
   #   - TODO: another node ?
   # TODO: if max_depth is set, and still has time, finish all not evaluated nodes
   def choose_next_node
-    return @current_pos_node if @current_pos_node.analyzed_depth == -1
-    return nil if @current_node.score >= MAX # check_mate
+    return @current_pos_node if @current_pos_node.analyzed_depth <= 0
+    return nil if @current_node.score >= MAX # previous node led to checkmate
+    return @current_pos_node.children.first if @current_pos_node == @current_node
+
     #puts "choosing next: current node #{@current_node} adepth: #{@current_node.analyzed_depth}"
+
+    # TODO: beta cutoff when @current_node.score > parent.score
+    # what really does a beta cutoff ?
 
     # evaluate next sibling
     #   if the current depth is not deep enough,
@@ -283,14 +292,13 @@ class MoveTree
       node.update(MAX, 0)
       return
     end
-    # graph(node.move.to_s) # clear tree, so children too !!
+    # graph(node.move.to_s) # FIXME: clear tree, so children too !!
     for child in node.children # children are sorted
       @p.make(child.move)
       #puts "making #{child.move}"
-      score = -@s.quiesce(-MAX, MAX,0) # FIXME: not even sure it is right
+      score = -@s.quiesce(-MAX, (node.parent ?  -node.score : MAX), 0)
       @p.unmake
       child.update(score, 0)
-      # TODO: beta cutoff is when one score of the children > -from_node.score
     end
   end
 
@@ -299,12 +307,10 @@ class MoveTree
     pv(node.children[0], rv << node.children[0])
   end
 
-  def pv_str
-    pv(@current_pos_node).map{|n| "#{n.move.to_s} (#{n.score})"}.join(", ")
-  end
-
-  def print_pv
-    puts "PV: #{pv_str}"
+  # unmake and make moves
+  def prepare_position
+    unmake_stack
+    build_stack
   end
 
   def unmake_stack
@@ -319,9 +325,9 @@ class MoveTree
   # build a move stack from @current_pos_node to @current_node and make the moves
   def build_stack
     n = @current_node
-    #puts
     #puts "from #{@current_pos_node} to #{n}"
-    while(n.parent and n.move.to_s != @current_pos_node.move.to_s) do
+    while(n.parent and (@current_pos_node==@root or n.move.to_s(:xboard) != @current_pos_node.move.to_s(:xboard))) do
+      #puts "  stacking #{n}"
       @stack << n
       n = n.parent
     end
@@ -342,6 +348,14 @@ class MoveTree
   #  raise "get: no child at index #{index}" if !rv
   #  rv
   #end
+
+  def pv_str
+    pv(@current_pos_node).map{|n| "#{n.move.to_s} (#{n.score})"}.join(", ")
+  end
+
+  def print_pv
+    puts "PV: #{pv_str}"
+  end
 
   def move_str(node)
     return "" if !node or !node.move

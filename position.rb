@@ -258,7 +258,13 @@ class Position
       end
     end
 
-    unset(move.piece, move.from)
+    begin # FIXME: to track a bug
+      unset(move.piece, move.from)
+    rescue Exception => e
+      puts "#{move}, capturing #{piece_to_symbol(move.capture)}"
+      printp
+      raise e
+    end
     if move.promotion
       set(move.promotion, move.to)
     else
@@ -333,7 +339,12 @@ class Position
       if move.enpassant
         set(move.capture, move.enpassant)
       else
-        set(move.capture, move.to)
+        begin # FIXME: to track a bug
+          set(move.capture, move.to)
+        rescue Exception => e
+          puts move
+          raise e
+        end
       end
     end
 
@@ -375,6 +386,7 @@ class Position
   def set(piece, *indexes)
     indexes.each do |i|
       pos = (1 << i)
+      raise "bit already set for #{piece_to_symbol(piece)} at #{index_to_case(i)}" if @bitboards[piece] & pos > 0
       @bitboards[piece] |= pos
     end
     update_sum_boards
@@ -383,6 +395,7 @@ class Position
   def unset(piece, *indexes)
     indexes.each do |i|
       pos = ~(1 << i)
+      raise "bit not set for #{piece_to_symbol(piece)} at #{index_to_case(i)}" if @bitboards[piece] & (1 << i) == 0
       @bitboards[piece] &= pos
     end
     update_sum_boards

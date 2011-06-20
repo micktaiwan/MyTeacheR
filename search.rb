@@ -204,35 +204,36 @@ class Search
 
   def quiesce(alpha, beta, depth)
     stand_pat = factor*@p.evaluate()
-    #puts "Quiescing... d=#{depth}, stand pat = #{stand_pat}"
-    return beta if( stand_pat >= beta )
+    #if depth > 0
+    #  puts "Quiescing... a=#{alpha}, b=#{beta}, d=#{depth}, stand pat = #{stand_pat}"
+    #  gets
+    #end
+    return stand_pat if( stand_pat >= beta )
 
     # Delta pruning
     #BIG_DELTA = piece_value(QUEEN)
     #if ( isPromotingPawn() ) BIG_DELTA += 775;
     return alpha if(stand_pat < alpha - BIG_DELTA) # delta pruning
     alpha = stand_pat if(stand_pat > alpha)
-    #return alpha if depth >= 3 # FIXME
+    #return alpha if depth >= 0 # FIXME
 
-    #moves = @p.gen_legal_captures
-    #sort_moves!(moves)
     for m in @p.gen_legal_captures
       #return factor*99999 if king_captured?(m)
 
       if @debug
         n = false
         @stats.start_special(:see)
-        n = true if see_root(m) < 0
+        #n = true if see_root(m) < 0
         @stats.end_special(:see)
         next if n
       else
-        next if see_root(m) < 0
+        #next if see_root(m) < 0
       end
       @p.make(m)
       score = -quiesce( -beta, -alpha, depth+1 )
       @p.unmake
 
-      return beta if( score >= beta )
+      return score if( score >= beta )
       alpha = score if( score > alpha )
     end
     #puts "returning #{alpha}"
@@ -260,9 +261,9 @@ class Search
   def sort_moves!(moves)
     moves = moves.sort_by { |m|
       @p.make(m)
-      rv = eval_material + eval_position
+      rv = @p.eval_material # + @p.eval_position
       @p.unmake
-      rv
+      -rv
       }
   end
 
