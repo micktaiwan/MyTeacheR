@@ -215,11 +215,9 @@ class Search
     #if ( isPromotingPawn() ) BIG_DELTA += 775;
     return alpha if(stand_pat < alpha - BIG_DELTA) # delta pruning
     alpha = stand_pat if(stand_pat > alpha)
-    #return alpha if depth >= 0 # FIXME
+    #return alpha if depth >= 3 # FIXME
 
     for m in @p.gen_legal_captures
-      #return factor*99999 if king_captured?(m)
-
       if @debug
         n = false
         @stats.start_special(:see)
@@ -229,6 +227,7 @@ class Search
       else
         #next if see_root(m) < 0
       end
+
       @p.make(m)
       score = -quiesce( -beta, -alpha, depth+1 )
       @p.unmake

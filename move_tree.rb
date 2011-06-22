@@ -167,12 +167,13 @@ class MoveTree
     @root.clear
   end
 
-  def search(max_depth=3, max_time=10)
+  def search(max_depth=3, max_time=0)
     @max_depth = max_depth
     @max_time  = max_time
     #@stack.clear # as we could do a @current_move = @current_pos_node, but still preparing the position with some @p.unmake.... due to the stack being
     generate_until_history # FIXME: generate some bugs with unmake: play, play, unmake, d7d5, play => bug !
     best_depth = 0
+    start_time = Time.now
     while(@current_node = choose_next_node) do
       prepare_position
       #puts "** current node = #{@current_node}. @root.analyzed_depth=#{@root.analyzed_depth}"
@@ -181,9 +182,10 @@ class MoveTree
       depth = @current_pos_node.analyzed_depth
       if(depth > best_depth)
         best_depth = depth
-        puts "depth: #{best_depth}"
-        print_pv
+        #puts "depth: #{best_depth}"
+        #print_pv
       end
+      break if max_time != 0 and Time.now - start_time > max_time
     end
     unmake_stack
     @current_pos_node = @current_node = @current_pos_node.children.first # pv(@current_pos_node)[0]
@@ -202,7 +204,7 @@ class MoveTree
   def generate_until_history
     last = @p.history.last
     if !last # if no history, just stop
-      puts "Info: no history, clearing tree"
+      #puts "Info: no history, clearing tree"
       clear
       @current_move = @current_pos_node = @root
       return
@@ -234,7 +236,7 @@ class MoveTree
 
       # else clear the tree
       # FIXME: should never happen, find the move, or one of his ancestor !
-      puts "Info: move #{last[0]} not found in tree, clearing tree"
+      #puts "Info: move #{last[0]} not found in tree, clearing tree"
       clear
       n = @root.add_child(last[0])
       @current_move = @current_pos_node = n

@@ -28,16 +28,25 @@ Other
 - repetitions rule
 
 
-Current detailled TODO list:
+Current detailled TODO list
+===========================
+- for depth 1 I'm sure quiesce is already taking too much time (>10s!)
+  r2q1rk1/pppb1ppp/2nbpn2/1B1p4/3P4/2N1PN2/PPPBQPPP/R4RK1 b - - 7 8
+- xboard mode shall output nothing
+- generate_until_history generates some bugs with unmake: play, play, unmake, d7d5, play => bug !
+- Passer les tests
+- Faire le alpha beta pour quiesce pour augmenter la vitesse.
 
 - Started: Iterative deepening and move ordering to be able to search deeper
   - Hash table
+- read https://chessprogramming.wikispaces.com/MVV-LVA
 - Do not prune until depth > 3 to find WAC#1 ? impossible....
 - Finish LMR
 - opening book
 - Idea: For legal moves, do not check it up-front, but wait until the move is detected as a good move (not pruned) and then verify if it is legal.
 - Started: moves generation really using bitboard (and premove tables ?)
 - Setup a match routine between different versions of MyTeacher to see ELO improvements ! :)
+
 
 The speed of move generator is not very important.
 If you have a 20% faster move generator, your engine will be only 1% faster.

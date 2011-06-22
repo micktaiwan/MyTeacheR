@@ -6,7 +6,7 @@ class Position
   #include MyTeacherUtils
 
   def evaluate
-    eval_material + eval_position# + eval_mobility #+ eval_repetition
+    eval_material + eval_position + eval_mobility #+ eval_repetition
   end
 
   def eval_material
