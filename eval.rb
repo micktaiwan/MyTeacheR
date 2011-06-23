@@ -6,7 +6,11 @@ class Position
   #include MyTeacherUtils
 
   def evaluate
-    eval_material + eval_position + eval_mobility #+ eval_repetition
+    #@stats.start_special(:evaluate)
+    #rv = eval_material + eval_position + eval_mobility #+ eval_repetition
+    #@stats.end_special(:evaluate)
+    #rv
+    eval_material + eval_position
   end
 
   def eval_material

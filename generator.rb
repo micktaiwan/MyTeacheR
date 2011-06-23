@@ -17,11 +17,21 @@ class Position
   # generate pseudo legal moves
   def gen_moves(side=@side)
     gen_knights_moves(side) +
-    gen_rooks_moves(side) +
+    gen_rooks_moves(side)   +
     gen_bishops_moves(side) +
-    gen_queens_moves(side) +
-    gen_pawns_moves(side) +
+    gen_queens_moves(side)  +
+    gen_pawns_moves(side)   +
     gen_king_moves(side)
+  end
+
+  # TODO: in progress: captures generation only to see if quiesce performances are better
+  def gen_captures(side=@side)
+    gen_knights_captures(side) +
+    gen_rooks_captures(side)   +
+    gen_bishops_captures(side) +
+    gen_queens_captures(side)  +
+    gen_pawns_captures(side)   +
+    gen_king_captures(side)
   end
 
   def gen_legal_captures(side=@side)
@@ -86,6 +96,7 @@ class Position
   end
 
   def gen_knights_moves(side)
+    #@stats.start_special(:knight_moves)
     moves = []
     other_color_or_empty = (side == WHITE ? ~@all_whites : ~@all_blacks)
     piece = colored_piece(KNIGHT,side)
@@ -94,6 +105,7 @@ class Position
         moves << Move.new(piece, i, target, piece_at(target))
       end
     end
+    #@stats.end_special(:knight_moves)
     moves
   end
 
@@ -146,11 +158,13 @@ class Position
   end
 
   def gen_rooks_moves(side)
+    #@stats.start_special(:rook_moves)
     moves = []
     rooks = @bitboards[colored_piece(ROOK,side)]
     for r in indexes(rooks)
       moves += gen_rook_type_moves(side, r, ROOK)
     end
+    #@stats.end_special(:rook_moves)
     moves
   end
 
@@ -181,11 +195,13 @@ class Position
   end
 
   def gen_bishops_moves(side)
+    #@stats.start_special(:bishop_moves)
     moves = []
     bishops = @bitboards[colored_piece(BISHOP,side)]
     for r in indexes(bishops)
       moves += gen_bishop_type_moves(side, r, BISHOP)
     end
+    #@stats.end_special(:bishop_moves)
     moves
   end
 
@@ -212,6 +228,7 @@ class Position
   end
 
   def gen_pawns_moves(side)
+    #@stats.start_special(:pawn_moves)
     if side==BLACK
       in_front_int      = -8
       second_rank_high  = 56
@@ -288,6 +305,7 @@ class Position
         end
       end
     end
+    #@stats.end_special(:pawn_moves)
     moves
   end
 
@@ -370,7 +388,7 @@ class Position
   end
 
   def in_check?(index, side)
-    return true if get_attackers(index, side)[0]
+    return true if get_attackers(index, side).first
     return false
   end
 

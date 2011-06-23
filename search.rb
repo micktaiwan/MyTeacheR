@@ -203,6 +203,7 @@ class Search
   end
 
   def quiesce(alpha, beta, depth)
+    #return factor*@p.evaluate()
     stand_pat = factor*@p.evaluate()
     #if depth > 0
     #  puts "Quiescing... a=#{alpha}, b=#{beta}, d=#{depth}, stand pat = #{stand_pat}"

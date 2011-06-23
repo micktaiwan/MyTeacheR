@@ -13,7 +13,7 @@ class MyTeacher
 
   # TODO externalize this string
   # TODO: plan version and their content ?
-  ProgramVersion = "MyTeacheR - v0.11 - 18 June 2011 - with move_tree almost working"
+  ProgramVersion = "MyTeacheR - v0.2 - 23 June 2011 - with move_tree working"
   include MyTeacherUtils
 
   Pre_perft = {
