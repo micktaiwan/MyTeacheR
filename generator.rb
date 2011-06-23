@@ -30,13 +30,14 @@ class Position
     gen_rooks_captures(side)   +
     gen_bishops_captures(side) +
     gen_queens_captures(side)  +
-    gen_pawns_captures(side)   +
+    gen_pawns_moves(side, true)   +
     gen_king_captures(side)
   end
 
   def gen_legal_captures(side=@side)
     # FIXME: gen_moves is somewhat brute force....
-    prune_king_revealers(side, gen_moves(side).select{|m|m.capture != nil})
+    #prune_king_revealers(side, gen_moves(side).select{|m|m.capture != nil})
+    prune_king_revealers(side, gen_captures(side))
   end
 
   # private
@@ -109,6 +110,21 @@ class Position
     moves
   end
 
+  def gen_knights_captures(side)
+    #@stats.start_special(:knight_moves)
+    moves = []
+    other_color = (side == WHITE ? @all_blacks : @all_whites)
+    piece = colored_piece(KNIGHT,side)
+    for i in indexes(@bitboards[colored_piece(KNIGHT,side)])
+      for target in indexes(@knight_attacks[i] & other_color)
+        moves << Move.new(piece, i, target, piece_at(target))
+      end
+    end
+    #@stats.end_special(:knight_moves)
+    moves
+  end
+
+
   def rank_occupancy(index)
     (@all_pieces & @rank_mask[index]) >> @rank_shift[index]
   end
@@ -157,16 +173,36 @@ class Position
     moves
   end
 
+  def gen_rook_type_captures(side, index, piece)
+    moves = []
+    other_color = (side == WHITE ? @all_blacks : @all_whites)
+    cpiece = colored_piece(piece,side)
+    for target in indexes(rook_moves(index) & other_color)
+      moves << Move.new(cpiece, index, target, piece_at(target))
+    end
+    moves
+  end
+
   def gen_rooks_moves(side)
     #@stats.start_special(:rook_moves)
     moves = []
-    rooks = @bitboards[colored_piece(ROOK,side)]
-    for r in indexes(rooks)
+    for r in indexes(@bitboards[colored_piece(ROOK,side)])
       moves += gen_rook_type_moves(side, r, ROOK)
     end
     #@stats.end_special(:rook_moves)
     moves
   end
+
+  def gen_rooks_captures(side)
+    #@stats.start_special(:rook_moves)
+    moves = []
+    for r in indexes(@bitboards[colored_piece(ROOK,side)])
+      moves += gen_rook_type_captures(side, r, ROOK)
+    end
+    #@stats.end_special(:rook_moves)
+    moves
+  end
+
 
   def gen_bishop_type_moves(side, index, piece, start_limit = 7)
     moves = []
@@ -194,12 +230,47 @@ class Position
     moves
   end
 
+  def gen_bishop_type_captures(side, index, piece, start_limit = 7)
+    moves = []
+    for inc in [-9,-7,7,9]
+      limit = start_limit
+      target = index + inc
+      rank = target / 8
+      lastrank = index / 8
+      while limit > 0 and target >= 0 and target <= 63 and (lastrank - rank).abs == 1 do
+        capture = piece_at(target)
+        if capture
+          if side != color(capture)
+            moves << Move.new(colored_piece(piece,side), index, target, capture)
+            break
+          else
+            break
+          end
+        end
+        lastrank  = rank
+        target   += inc
+        rank      = target / 8
+        limit    -= 1
+      end
+    end
+    moves
+  end
+
   def gen_bishops_moves(side)
     #@stats.start_special(:bishop_moves)
     moves = []
-    bishops = @bitboards[colored_piece(BISHOP,side)]
-    for r in indexes(bishops)
+    for r in indexes(@bitboards[colored_piece(BISHOP,side)])
       moves += gen_bishop_type_moves(side, r, BISHOP)
+    end
+    #@stats.end_special(:bishop_moves)
+    moves
+  end
+
+  def gen_bishops_captures(side)
+    #@stats.start_special(:bishop_moves)
+    moves = []
+    for r in indexes(@bitboards[colored_piece(BISHOP,side)])
+      moves += gen_bishop_type_captures(side, r, BISHOP)
     end
     #@stats.end_special(:bishop_moves)
     moves
@@ -207,10 +278,18 @@ class Position
 
   def gen_queens_moves(side)
     moves = []
-    queens = @bitboards[colored_piece(QUEEN,side)]
-    for r in indexes(queens)
+    for r in indexes(@bitboards[colored_piece(QUEEN,side)])
       moves += gen_rook_type_moves(side, r, QUEEN)
       moves += gen_bishop_type_moves(side, r, QUEEN)
+    end
+    moves
+  end
+
+  def gen_queens_captures(side)
+    moves = []
+    for r in indexes(@bitboards[colored_piece(QUEEN,side)])
+      moves += gen_rook_type_captures(side, r, QUEEN)
+      moves += gen_bishop_type_captures(side, r, QUEEN)
     end
     moves
   end
@@ -227,7 +306,7 @@ class Position
     rv
   end
 
-  def gen_pawns_moves(side)
+  def gen_pawns_moves(side, only_captures=false)
     #@stats.start_special(:pawn_moves)
     if side==BLACK
       in_front_int      = -8
@@ -253,20 +332,22 @@ class Position
     moves = []
     for p in indexes(@bitboards[colored_piece(PAWN, side)])
       in_front = piece_at(p+in_front_int)
-      # single step + promotion
-      if !in_front
-        in_front_pos = p + in_front_int
-        if in_front_pos > promote_low and in_front_pos < promote_high
-          for piece in promotes
-            moves << Move.new(colored_piece(PAWN,side),p,in_front_pos, nil, piece)
+      if !only_captures
+        # single step + promotion
+        if !in_front
+          in_front_pos = p + in_front_int
+          if in_front_pos > promote_low and in_front_pos < promote_high
+            for piece in promotes
+              moves << Move.new(colored_piece(PAWN,side),p,in_front_pos, nil, piece)
+            end
+          else
+            moves << Move.new(colored_piece(PAWN,side),p,in_front_pos)
           end
-        else
-          moves << Move.new(colored_piece(PAWN,side),p,in_front_pos)
         end
-      end
-      #double jump
-      if p < second_rank_high and p > second_rank_low and !in_front and !piece_at(p+two_away_int)
-        moves << Move.new(colored_piece(PAWN,side),p, p+two_away_int)
+        #double jump
+        if p < second_rank_high and p > second_rank_low and !in_front and !piece_at(p+two_away_int)
+          moves << Move.new(colored_piece(PAWN,side),p, p+two_away_int)
+        end
       end
       #captures
       unless p % 8 == 0 # we're in the a file
@@ -402,6 +483,17 @@ class Position
     moves += gen_castle_moves(side, king_i)
     moves
   end
+
+  def gen_king_captures(side)
+    king_i = indexes(@bitboards[colored_piece(KING, side)]).first
+    #raise "No king ???" if !king_i
+    moves = []
+    for target in indexes(@king_attacks[king_i] & (side == WHITE ? @all_blacks : @all_whites))
+      moves << Move.new(colored_piece(KING, side), king_i, target, piece_at(target))
+    end
+    moves
+  end
+
 
 end
 

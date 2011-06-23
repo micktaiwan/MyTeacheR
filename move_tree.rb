@@ -153,7 +153,7 @@ class MoveTree
 
   include Constants
 
-  attr_reader   :root, :current_pos_node
+  attr_reader   :root, :current_pos_node, :best, :current_time
 
   def initialize(p,s)
     @p, @s            = p,s
@@ -161,6 +161,16 @@ class MoveTree
     @current_node     = @root # current analyzed node
     @current_pos_node = @root # current position last played move
     @stack            = Array.new
+    @start_time       = Time.now
+  end
+
+  def best
+    return @current_pos_node.children.first if @current_pos_node and @current_pos_node.children
+    nil
+  end
+
+  def current_time
+    Time.now-@start_time
   end
 
   def clear
@@ -168,8 +178,9 @@ class MoveTree
   end
 
   def search(max_depth=3, max_time=0)
-    @max_depth = max_depth
-    @max_time  = max_time
+    @start_time = Time.now
+    @max_depth  = max_depth
+    @max_time   = max_time
     #@stack.clear # as we could do a @current_move = @current_pos_node, but still preparing the position with some @p.unmake.... due to the stack being
     generate_until_history # FIXME: generate some bugs with unmake: play, play, unmake, d7d5, play => bug !
     best_depth = 0
@@ -209,7 +220,7 @@ class MoveTree
       @current_move = @current_pos_node = @root
       return
     end
-    return if @current_pos_node.move == last[0] # no move played since last computer move
+    return if !@current_pos_node or @current_pos_node.move == last[0] # mate or no move played since last computer move
 
     # @current_pos_node is the last move payed by computer
     # find it in history
@@ -304,7 +315,7 @@ class MoveTree
     end
   end
 
-  def pv(node, rv=[])
+  def pv(node=@current_pos_node, rv=[])
     return rv if not node.children or not node.children[0]
     pv(node.children[0], rv << node.children[0])
   end

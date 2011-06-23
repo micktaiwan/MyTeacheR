@@ -29,7 +29,7 @@ class Search
     # type of play depends of the function used
     @move, @score = case type
       when :iterative_search
-        iterative_start
+        @tree.search(MaxDepth)
       when :depth_first
         depth_first
       when :random
@@ -51,42 +51,7 @@ class Search
   end
 
   def depth_first
-    search_root(-MAX, MAX, 3)
-  end
-
-  def iterative_start
-    return @tree.search(3)
-    return iterate(-MAX, MAX, 3)
-
-    #@moves = [] # store PV
-    depth = 1
-    while depth <= 3
-      puts "d=#{depth}"
-      move, score = iterate(-MAX, MAX, depth)
-      puts "> best so far: #{move}, score: #{score}, nodes: #{@stats.current_turn_nodes}, n/s: #{@stats.nodes_per_second}, #{pretty_time(5000.0/@stats.nodes_per_second)} for 5000 nodes" if @debug
-      depth += 1
-    end
-    return [move, score]
-  end
-
-  def iterate(a, b, depth)
-    return [0,nil] if(depth == 0)
-    best = nil
-    moves = @p.gen_legal_moves
-    sort_moves!(moves)
-    for m in moves
-      @stats.inc_turn_nodes
-      @p.make(m)
-      score = -negamax_with_reductions(-b, -a, depth-1)
-      @p.unmake
-      #return [score, m] if( score >= b )
-      if( score > a )
-        a     = score
-        best  = m
-        puts "best so far: #{m}, score: #{a}, nodes: #{@stats.current_turn_nodes}, n/s: #{@stats.nodes_per_second}, #{pretty_time(5000.0/@stats.nodes_per_second)} for 5000 nodes" if @debug
-      end
-    end
-    [best, a]
+    search_root(-MAX, MAX, MaxDepth)
   end
 
   def search_root(a,b,depth)
