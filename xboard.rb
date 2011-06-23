@@ -2,6 +2,8 @@
 require 'position'
 require 'search'
 
+# TODO: put all this into a proper class
+
 confirm       = false
 $stdout.sync  = true
 $stderr.sync  = true
@@ -25,19 +27,19 @@ module Enumerable
   end
 end
 
-def pv_str(p,s)
-  pv = s.tree.pv
+def pv_str(p,s, pv)
   "#{pv.size} #{s.tree.best.score} #{(s.tree.current_time*100).to_i} #{0} #{pv.join(" ")}"
 end
 
 def play p, s
   Thread.new { s.play }
-  b = nil
+  pv = nil
   until s.done
     sleep(0.2)
-    if s.tree.best != b
-      b = s.tree.best
-      logout pv_str(p,s)
+    best = s.tree.pv
+    if best and best != pv
+      pv = best
+      logout pv_str(p,s, best)
     end
   end
   move = s.move
