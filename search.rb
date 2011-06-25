@@ -29,7 +29,7 @@ class Search
     # type of play depends of the function used
     @move, @score = case type
       when :iterative_search
-        @tree.search(MaxDepth)
+        @tree.search
       when :depth_first
         depth_first
       when :random
@@ -184,15 +184,15 @@ class Search
     #return alpha if depth >= 3 # FIXME
 
     for m in @p.gen_legal_captures
-      if @debug
-        n = false
-        @stats.start_special(:see)
-        #n = true if see_root(m) < 0
-        @stats.end_special(:see)
-        next if n
-      else
+      #if @debug
+      #  n = false
+      #  @stats.start_special(:see)
+      #  #n = true if see_root(m) < 0
+      #  @stats.end_special(:see)
+      #  next if n
+      #else
         #next if see_root(m) < 0
-      end
+      #end
 
       @p.make(m)
       score = -quiesce( -beta, -alpha, depth+1 )
@@ -208,17 +208,17 @@ class Search
   # Static Exchange Evaluation from a Move
   def see_root(capture_move)
     @p.make(capture_move)
-    value = piece_value(capture_move.piece) - see(capture_move.to)
+    value = Piece_values[capture_move.piece] - see(capture_move.to)
     @p.unmake
     return value
   end
 
   # generic Static Exchange Evaluation
   def see(square)
-    piece, from_square = @p.get_smallest_attacker(square, @p.side)
-    return 0 if not piece
-    @p.make(Move.new(piece, from_square, square, @p.piece_at(square)))
-    value = piece_value(piece) - see(square)
+    attacker, from_square = @p.get_smallest_attacker(square, @p.side)
+    return 0 if not attacker
+    @p.make(Move.new(attacker, from_square, square, @p.piece_at(square)))
+    value = Piece_values[attacker] - see(square)
     @p.unmake
     return value
   end

@@ -1,8 +1,8 @@
-#require 'constants'
+require 'constants'
 
 class Position
 
-  #include Constants
+  include Constants
   #include MyTeacherUtils
 
   def evaluate
@@ -10,22 +10,22 @@ class Position
     #rv = eval_material + eval_position + eval_mobility #+ eval_repetition
     #@stats.end_special(:evaluate)
     #rv
-    eval_material + eval_position
+    eval_material + eval_position + eval_king_safety
   end
 
   def eval_material
-    white = piece_value(PAWN)    * num_pieces(WPAWN) +
-        piece_value(QUEEN)   * num_pieces(WQUEEN) +
-        piece_value(ROOK)    * num_pieces(WROOK) +
-        piece_value(BISHOP)  * num_pieces(WBISHOP) +
-        piece_value(KNIGHT)  * num_pieces(WKNIGHT) +
-        piece_value(KING)    * num_pieces(WKING)
-    black = piece_value(PAWN)    * num_pieces(BPAWN) +
-        piece_value(QUEEN)   * num_pieces(BQUEEN) +
-        piece_value(ROOK)    * num_pieces(BROOK) +
-        piece_value(BISHOP)  * num_pieces(BBISHOP) +
-        piece_value(KNIGHT)  * num_pieces(BKNIGHT) +
-        piece_value(KING)    * num_pieces(BKING)
+    white = Piece_values[PAWN]    * num_pieces(WPAWN) +
+        Piece_values[QUEEN]   * num_pieces(WQUEEN) +
+        Piece_values[ROOK]    * num_pieces(WROOK) +
+        Piece_values[BISHOP]  * num_pieces(WBISHOP) +
+        Piece_values[KNIGHT]  * num_pieces(WKNIGHT) +
+        Piece_values[KING]    * num_pieces(WKING)
+    black = Piece_values[PAWN]    * num_pieces(BPAWN) +
+        Piece_values[QUEEN]   * num_pieces(BQUEEN) +
+        Piece_values[ROOK]    * num_pieces(BROOK) +
+        Piece_values[BISHOP]  * num_pieces(BBISHOP) +
+        Piece_values[KNIGHT]  * num_pieces(BKNIGHT) +
+        Piece_values[KING]    * num_pieces(BKING)
     white - black
   end
 
@@ -45,6 +45,17 @@ class Position
     indexes(bitboards[BLACK_QUEENS]).inject(0)  { |sum, i| BQUEEN_TABLE[i] + sum } +
     indexes(bitboards[BLACK_KING]).inject(0)    { |sum, i| BKING_MG_TABLE[i] + sum }
     white - black
+  end
+
+  def eval_king_safety
+    wk = indexes(bitboards[WHITE_KING]).first
+    bk = indexes(bitboards[BLACK_KING]).first
+    if in_check?(wk,WHITE)
+      return -90
+    elsif in_check?(bk,BLACK)
+      return +90
+    end
+    0
   end
 
   def eval_mobility

@@ -53,5 +53,12 @@ describe Search, "" do
     @s.move.should == nil
   end
 
+  it "should do the last move 2" do
+    @p.load_fen("k2r4/8/8/8/8/8/5PPP/6K1 b - -")
+    @s.play
+    @s.move.to_s.should == "rd8d1"
+    @p.in_check?(6,WHITE).should == true
+  end
+
 end
 

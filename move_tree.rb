@@ -43,7 +43,7 @@ class Entry
   end
 
   def sort_children
-    @children = @children.sort_by { |c| [-c.analyzed_depth, -c.score]}
+    @children = @children.sort_by { |c| [(c.analyzed_depth >= MinFullDepth ? 0 : 1), -c.score]}
     #puts "Sorting #{self} children:"
     #print_children
   end
@@ -159,7 +159,7 @@ class MoveTree
     @p, @s            = p,s
     @root             = Entry.new(@p, self)
     @current_node     = @root # current analyzed node
-    @current_pos_node = @root # current position last played move
+    @current_pos_node = @root # current position last played node
     @stack            = Array.new
     @start_time       = Time.now
   end
@@ -177,25 +177,25 @@ class MoveTree
     @root.clear
   end
 
-  def search(max_depth=3, max_time=0)
+  def search(max_time=0)
+    return [nil,-MAX] if !@current_pos_node # mate
     @start_time = Time.now
-    @max_depth  = max_depth
     @max_time   = max_time
     #@stack.clear # as we could do a @current_move = @current_pos_node, but still preparing the position with some @p.unmake.... due to the stack being
     generate_until_history # FIXME: generate some bugs with unmake: play, play, unmake, d7d5, play => bug !
-    best_depth = 0
+    #best_depth = 0
     start_time = Time.now
     while(@current_node = choose_next_node) do
       prepare_position
       #puts "** current node = #{@current_node}. @root.analyzed_depth=#{@root.analyzed_depth}"
       get_children_score(@current_node) # this is the iteration
       @current_node.update_to_root
-      depth = @current_pos_node.analyzed_depth
-      if(depth > best_depth)
-        best_depth = depth
+      #depth = @current_pos_node.analyzed_depth
+      #if(depth > best_depth)
+      #  best_depth = depth
         #puts "depth: #{best_depth}"
         #print_pv
-      end
+      #end
       break if max_time != 0 and Time.now - start_time > max_time
     end
     unmake_stack
@@ -204,7 +204,7 @@ class MoveTree
       graph("bug1")
       raise IllegalMoveException.new("#{move_str(@current_node.parent)} != #{@p.history.last[0].to_s(:xboard)}")
     end
-    return [nil,nil] if !@current_pos_node
+    return [nil,-MAX] if !@current_pos_node
     [@current_pos_node.move, @current_pos_node.score]
   end
 
@@ -270,8 +270,9 @@ class MoveTree
   #   - a child of the current node
   #   - a parent's sibling in case of beta cutoff
   #   - TODO: another node ?
-  # TODO: if max_depth is set, and still has time, finish all not evaluated nodes
+  # TODO: if still has time, finish all not evaluated nodes
   def choose_next_node
+    raise "no @current_pos_node" if !@current_pos_node
     return @current_pos_node if @current_pos_node.analyzed_depth <= 0
     return nil if @current_node.score >= MAX # previous node led to checkmate
     return @current_pos_node.children.first if @current_pos_node == @current_node
@@ -286,10 +287,10 @@ class MoveTree
     #   if the count of analyzed siblings if not enough
     next_sibling = @current_node.weak_siblings(1).first
     return next_sibling if next_sibling and
-      (@current_pos_node.analyzed_depth <= ReductionLimit or
-      @current_node.strong_siblings(1).size < FullDepthMoves)
+      (@current_pos_node.analyzed_depth <= MinFullDepth or
+      @current_node.strong_siblings(1).size < MinDepthMoves)
 
-    if @current_pos_node.analyzed_depth >= @max_depth
+    if @current_pos_node.analyzed_depth >= MinDepth
       # TODO: deepen moves giving check
       return nil # that was the last node !
     end

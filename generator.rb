@@ -475,7 +475,7 @@ class Position
 
   def gen_king_moves(side)
     king_i = indexes(@bitboards[colored_piece(KING, side)]).first
-    #raise "No king ???" if !king_i
+    raise "No king ???" if !king_i
     moves = []
     for target in indexes(@king_attacks[king_i] & (side == WHITE ? ~@all_whites : ~@all_blacks))
       moves << Move.new(colored_piece(KING, side), king_i, target, piece_at(target))
@@ -486,7 +486,7 @@ class Position
 
   def gen_king_captures(side)
     king_i = indexes(@bitboards[colored_piece(KING, side)]).first
-    #raise "No king ???" if !king_i
+    raise "No king ???" if !king_i
     moves = []
     for target in indexes(@king_attacks[king_i] & (side == WHITE ? @all_blacks : @all_whites))
       moves << Move.new(colored_piece(KING, side), king_i, target, piece_at(target))

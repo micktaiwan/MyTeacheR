@@ -586,7 +586,7 @@ class Position
   def get_smallest_attacker(square, side)
     moves = get_attackers(square, side)
     return [nil, nil] if moves.size == 0
-    moves = moves.sort_by  { |m| piece_value(m[0]) }
+    moves = moves.sort_by  { |m| Piece_values[m[0]] }
     #puts moves.map { |m| piece_to_symbol(m[0])}.join(", ")
     #puts
     #puts moves[0][0], moves[0][1]

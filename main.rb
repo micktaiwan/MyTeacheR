@@ -114,8 +114,11 @@ class MyTeacher
           when input=="show"
             @p.printp
           when input=="moves"
-            @p.gen_legal_moves.sort_by {|m| m.to_s}.each do |m|
-              puts "#{m.to_s}: #{m.inspect}"
+            @p.gen_legal_moves.sort_by {|m| m.to_s(:xboard)}.each do |m|
+              @p.make(m)
+              s = @p.evaluate
+              puts "#{m.to_s} (#{s}): #{m.inspect}"
+              @p.unmake
             end
           when input=="graph"
             @s.tree.graph
@@ -305,21 +308,18 @@ class MyTeacher
 
   def solo
     begin
-      loop do
-        #@p.reset_to_starting_position
-        loop {
-          @dump = @p.dump
-          puts "side: #{@p.side==WHITE ? "w":"b"}"
-          can_move = @s.play
-          break if not can_move
-          @s.stats.print_end_turn_stats
-          @s.stats.print_verbose_stats
-          @p.printp
-          break if @p.hply >= 300
-          }
-        puts
-        puts "END"
-      end
+      loop {
+        @dump = @p.dump
+        puts "side: #{@p.side==WHITE ? "w":"b"}"
+        can_move = @s.play
+        break if not can_move
+        @s.stats.print_end_turn_stats
+        @s.stats.print_verbose_stats
+        @p.printp
+        break if @p.hply >= 300
+        }
+      puts
+      puts "Checkmate"
     rescue      Interrupt=> e # Ctrl-C
       puts
     rescue        Exception=> e

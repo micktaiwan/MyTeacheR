@@ -34,9 +34,10 @@ module MyTeacherUtils
 
   # return the numeric value of the piece
   # can pass KING / WKING / BKING, it works any way
-  def piece_value(p)
-    VALUES[piece_type(p)]
-  end
+  # OBSOLETE: use Pïece_values[piece]
+  #def piece_value(p)
+  #  VALUES[piece_type(p)]
+  #end
 
   def colored_piece(piece, side)
     # quicker than below....

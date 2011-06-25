@@ -25,9 +25,12 @@ BYTE                = 0xFF
    K4  = 0xf0f0f0f00f0f0f0f
 
 MAX = 999999
-MaxDepth       = 3 # without extensions
-FullDepthMoves = 3
-ReductionLimit = 1
+
+# MinFullDepth is the minimum depth to go evaluating all the moves
+# moves are sorted first if analyzed_depth > MinFullDepth, and then by score
+MinFullDepth  = 1
+MinDepth      = 3 # depth to go for at least a nb of moves equals to MinDepthMoves, without extensions
+MinDepthMoves = 3 # minimum nb of moves to analyze at least at MinDepth
 
 A8 = 56; B8 = 57; C8 = 58; D8 = 59; E8 = 60; F8 = 61; G8 = 62; H8 = 63;
 A7 = 48; B7 = 49; C7 = 50; D7 = 51; E7 = 52; F7 = 53; G7 = 54; H7 = 55;
@@ -53,7 +56,7 @@ SYMBOLS = [ 'K','Q','R','N','B','P',
             'k','q','r','n','b','p']
 
 # http://chessprogramming.wikispaces.com/Simplified+evaluation+function
-VALUES = [20000, 900, 500, 330, 320, 100] # KING, QUEEN, ROOK, KNIGHT, BISHOP, PAWN
+Piece_values = [20000, 900, 500, 330, 320, 100, 20000, 900, 500, 330, 320, 100] # WKING, WQUEEN, WROOK, WKNIGHT, WBISHOP, WPAWN, and blacks
 BIG_DELTA = 900 # for delta pruning
 
 BPAWN_TABLE = [
