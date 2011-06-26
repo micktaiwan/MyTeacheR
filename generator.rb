@@ -468,11 +468,6 @@ class Position
     king_attackers(index, side)
   end
 
-  def in_check?(index, side)
-    return true if get_attackers(index, side).first
-    return false
-  end
-
   def gen_king_moves(side)
     king_i = indexes(@bitboards[colored_piece(KING, side)]).first
     raise "No king ???" if !king_i
@@ -493,7 +488,6 @@ class Position
     end
     moves
   end
-
 
 end
 

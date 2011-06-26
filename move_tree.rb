@@ -9,21 +9,22 @@ rescue Exception => e
   puts
 end
 
-# A move tree entry
+# A move tree entry, could be named "node"
 class Entry
 
   include Constants
 
-  attr_reader   :parent, :children, :move, :analyzed_depth
+  attr_reader   :parent, :children, :move, :analyzed_depth, :depth
   attr_accessor :score
 
-  def initialize(p, tree, parent=nil, move=nil, score=-MAX, adepth=0)
+  def initialize(p, tree, parent=nil, move=nil, score=-MAX, depth=0)
     @p        = p # position
     @parent   = parent
     @move     = move
     @score    = score  # alpha
     @analyzed_depth = -1  # all tree nodes analyzed_depth must be must be calculated relatively to itself
-    @children = nil # to differenciate not yet generated and no chidlren at all
+    @depth    = depth # this node depth from root node
+    @children = nil # nil to differenciate not yet generated and no chidlren at all
     @tree     = tree
     @complete = nil
   end
@@ -33,7 +34,7 @@ class Entry
       @children = []
       @complete = false
     end
-    e = Entry.new(@p, @tree, self, move, -MAX, -1)
+    e = Entry.new(@p, @tree, self, move, -MAX, @depth+1)
     @children << e
     e
   end
@@ -100,9 +101,15 @@ class Entry
     @parent.children.select { |c| c.analyzed_depth >= depth }
   end
 
-  def depth(rv=0)
+  # itself included
+  def capture_siblings(depth)
+    return [] if !@parent
+    @parent.children.select { |c| c.analyzed_depth < depth and c.move.capture }
+  end
+
+  def calculated_depth(rv=0)
     return rv if not @parent
-    @parent.depth(rv+1)
+    @parent.calculated_depth(rv+1)
   end
 
   def generate_children
@@ -162,6 +169,7 @@ class MoveTree
     @current_pos_node = @root # current position last played node
     @stack            = Array.new
     @start_time       = Time.now
+    @check_nodes      = Array.new
   end
 
   def best
@@ -183,25 +191,28 @@ class MoveTree
     @max_time   = max_time
     #@stack.clear # as we could do a @current_move = @current_pos_node, but still preparing the position with some @p.unmake.... due to the stack being
     generate_until_history # FIXME: generate some bugs with unmake: play, play, unmake, d7d5, play => bug !
-    #best_depth = 0
+    best_depth = 0
+    best_score = -MAX
     start_time = Time.now
     while(@current_node = choose_next_node) do
       prepare_position
       #puts "** current node = #{@current_node}. @root.analyzed_depth=#{@root.analyzed_depth}"
       get_children_score(@current_node) # this is the iteration
       @current_node.update_to_root
-      #depth = @current_pos_node.analyzed_depth
-      #if(depth > best_depth)
-      #  best_depth = depth
-        #puts "depth: #{best_depth}"
-        #print_pv
-      #end
-      break if max_time != 0 and Time.now - start_time > max_time
+      depth = @current_pos_node.analyzed_depth
+      score = -@current_pos_node.score
+      if(depth > best_depth or score != best_score)
+        best_depth = depth
+        best_score = score
+        puts "depth: #{best_depth}, score: #{score}"
+        print_pv
+      end
+      break if max_time != 0 and Time.now-@start_time > max_time
     end
     unmake_stack
     @current_pos_node = @current_node = @current_pos_node.children.first # pv(@current_pos_node)[0]
     if @p.history.last and @current_node and move_str(@current_node.parent) != @p.history.last[0].to_s(:xboard)
-      graph("bug1")
+      graph("bug_illegal_move")
       raise IllegalMoveException.new("#{move_str(@current_node.parent)} != #{@p.history.last[0].to_s(:xboard)}")
     end
     return [nil,-MAX] if !@current_pos_node
@@ -224,6 +235,7 @@ class MoveTree
 
     # @current_pos_node is the last move payed by computer
     # find it in history
+    # FIXME: does not work just after an unmake
     size = @p.history.size
     index = size-1
     while(true) do
@@ -282,34 +294,51 @@ class MoveTree
     # TODO: beta cutoff when @current_node.score > parent.score
     # what really does a beta cutoff ?
 
+    # evaluate all captures
+    #s = @current_node.capture_siblings(1).first
+    #return s if s
+
     # evaluate next sibling
     #   if the current depth is not deep enough,
     #   if the count of analyzed siblings if not enough
-    next_sibling = @current_node.weak_siblings(1).first
-    return next_sibling if next_sibling and
+    #   if it remains some nodes that are better evaluated
+    s = @current_node.weak_siblings(1).first
+    #strongs = @current_node.strong_siblings(1)
+    return s if s and
       (@current_pos_node.analyzed_depth <= MinFullDepth or
-      @current_node.strong_siblings(1).size < MinDepthMoves)
+      @current_node.strong_siblings(1).size < MinDepthMoves or
+      Time.now-@start_time < MinTime
+      #s.score < @current_node.strong_siblings(1).first.score
+      )
 
-    if @current_pos_node.analyzed_depth >= MinDepth
-      # TODO: deepen moves giving check
-      return nil # that was the last node !
+    # ensuring that pv has at least MinDepth moves after deepening some moves
+    return pv(@current_pos_node)[-1] if pv(@current_pos_node).size < MinDepth
+
+    # deepen moves giving check
+    if !@check_nodes.empty?
+      n = @check_nodes.pop
+      puts "deepening move giving check #{n} / #{@check_nodes.size}"
+      return n
     end
 
-    #return nil if @current_node == pv(@current_pos_node)[-1]
-    #puts "!!! choosing to deepen #{pv(@current_pos_node)[-1]}"
-    pv(@current_pos_node)[-1]
+    return nil # that was the last node, will now play pv
   end
 
   def get_children_score(node)
     node.generate_children if !node.children
     if node.children.size == 0
-      node.update(MAX, 0)
+      if @p.other_side_in_check? # checkmate
+        node.update(MAX, 0)
+      else                    # stalemate
+        node.update(0, 0)
+      end
       return
     end
     # graph(node.move.to_s) # FIXME: clear tree, so children too !!
     for child in node.children # children are sorted
       @p.make(child.move)
       #puts "making #{child.move}"
+      @check_nodes << child if child.depth-@current_pos_node.depth < MinDepth and @p.side_in_check?
       score = -@s.quiesce(-MAX, (node.parent ?  -node.score : MAX), 0)
       @p.unmake
       child.update(score, 0)
@@ -394,12 +423,17 @@ class MoveTree
   def graph_node(n, parent=nil, depth=0)
     #print n, " "
     gn = @g.add_node(n.object_id.to_s, :label=>n.to_graphviz, :shape=>"Mrecord")
-    @g.add_edge(parent, gn) if parent
+    if parent
+      e = @g.add_edge(parent, gn)
+    end
     if n == @current_pos_node
       gn[:color] = "brown3"
       gn[:style] = "filled"
     elsif @s.tree.pv(@current_pos_node).include?(n)
       gn[:color] = "cadetblue"
+      gn[:style] = "filled"
+    elsif @s.tree.pv(@root).include?(n)
+      gn[:color] = "yellow"
       gn[:style] = "filled"
     end
     return if !n.children # or depth == 2
@@ -411,16 +445,15 @@ class MoveTree
     end
   end
 
-  def graph(name="tree")
+  def graph(name="tree", root_node=@current_pos_node)
     @g = GraphViz::new("G")
+    #@g['sep'] = "10,100"
     #@g["overlap"] = "compress"
     #@g["rankdir"] = "BT"
-    @g["size"] = "350,350"
     #@g["ratio"] = "0.9"
+    @g["size"] = "350,500"
     generate_until_history # FIXME: while doing ptest, it bugs
-    n = @current_pos_node
-    n = n.parent ? n.parent : n
-    graph_node(n) #@s.tree.root
+    graph_node(root_node) #@s.tree.root
     #puts
     @g.output(:svg => "#{name}.svg")
   end

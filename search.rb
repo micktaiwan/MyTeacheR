@@ -148,8 +148,7 @@ class Search
   end
 
   def null_move_allowed?
-    index = @p.indexes(@p.bitboards[colored_piece(KING, @side)]).first
-    !@p.in_check?(index,@p.side) and !@null_move
+    !(@null_move or side_in_check?)
   end
 
   # Common Conditions
@@ -161,7 +160,7 @@ class Search
   # - Anytime in a PV-Node in a PVS search
   # - Depth<3 (sometimes depth<2)
   def ok_to_reduce?(move)
-    index = @p.indexes(@p.bitboards[colored_piece(KING, @side)]).first
+    index = @p.indexes(@p.bitboards[colored_piece(KING, @p.side)]).first
     return false if move.capture or move.promotion or @p.in_check?(index,@p.side)
     #puts "reducing #{move}"
     true
@@ -183,7 +182,16 @@ class Search
     alpha = stand_pat if(stand_pat > alpha)
     #return alpha if depth >= 3 # FIXME
 
+    # Null move reduction
+    if !@p.side_in_check?
+      @p.make_null_move
+      score = -factor*@p.evaluate()
+      @p.unmake_null_move
+      return score if( score >= -alpha )
+    end
+
     for m in @p.gen_legal_captures
+      # Static Exchange Evaluation
       #if @debug
       #  n = false
       #  @stats.start_special(:see)

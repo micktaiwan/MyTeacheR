@@ -593,5 +593,21 @@ class Position
     [moves[0][0], moves[0][1]]
   end
 
+  def in_check?(index, side)
+    # TODO: get_attackers return all attackers as a array. Could be optimized
+    return true if get_attackers(index, side).first
+    return false
+  end
+
+  def side_in_check?
+    index = indexes(@bitboards[colored_piece(KING, @side)]).first
+    in_check?(index,@side)
+  end
+
+  def other_side_in_check?
+    index = indexes(@bitboards[colored_piece(KING, 1-@side)]).first
+    in_check?(index,1-@side)
+  end
+
 end
 

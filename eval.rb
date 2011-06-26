@@ -10,7 +10,7 @@ class Position
     #rv = eval_material + eval_position + eval_mobility #+ eval_repetition
     #@stats.end_special(:evaluate)
     #rv
-    eval_material + eval_position + eval_king_safety
+    eval_material + eval_position + eval_king_safety + eval_mobility
   end
 
   def eval_material
@@ -48,13 +48,9 @@ class Position
   end
 
   def eval_king_safety
-    wk = indexes(bitboards[WHITE_KING]).first
-    bk = indexes(bitboards[BLACK_KING]).first
-    if in_check?(wk,WHITE)
-      return -90
-    elsif in_check?(bk,BLACK)
-      return +90
-    end
+    # TODO: not the right thing to do. Better: do not prune check moves
+    return +Check_value if other_side_in_check?
+    return -Check_value if side_in_check?
     0
   end
 

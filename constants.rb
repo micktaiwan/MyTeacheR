@@ -5,6 +5,15 @@ end
 
 module Constants
 
+# MinFullDepth is the minimum depth to go evaluating all the moves
+# moves are sorted first if analyzed_depth > MinFullDepth, and then by score
+MinFullDepth  = 1
+MinDepth      = 3 # depth to go for at least a nb of moves equals to MinDepthMoves, without extensions
+MinDepthMoves = 4 # minimum nb of moves to analyze at least at MinDepth
+Check_value   = 50 # how much we value a check
+MinTime       = 2 # time below wich we can deepen
+
+
 WHITE, BLACK = 0, 1
 KING, QUEEN, ROOK, KNIGHT, BISHOP, PAWN = 0,1,2,3,4,5
 WKING, WQUEEN, WROOK, WKNIGHT, WBISHOP, WPAWN = 0,1,2,3,4,5
@@ -20,17 +29,12 @@ INIT_POSITION       = 0xFFFF00000000FFFF
 FULL_BB             = 0xFFFFFFFFFFFFFFFF
 FILE_OCCUPANCY_MASK = 0x000000000000003F
 BYTE                = 0xFF
-   K1  = 0xaa00aa00aa00aa00
-   K2  = 0xcccc0000cccc0000
-   K4  = 0xf0f0f0f00f0f0f0f
+K1  = 0xaa00aa00aa00aa00
+K2  = 0xcccc0000cccc0000
+K4  = 0xf0f0f0f00f0f0f0f
 
 MAX = 999999
 
-# MinFullDepth is the minimum depth to go evaluating all the moves
-# moves are sorted first if analyzed_depth > MinFullDepth, and then by score
-MinFullDepth  = 1
-MinDepth      = 3 # depth to go for at least a nb of moves equals to MinDepthMoves, without extensions
-MinDepthMoves = 3 # minimum nb of moves to analyze at least at MinDepth
 
 A8 = 56; B8 = 57; C8 = 58; D8 = 59; E8 = 60; F8 = 61; G8 = 62; H8 = 63;
 A7 = 48; B7 = 49; C7 = 50; D7 = 51; E7 = 52; F7 = 53; G7 = 54; H7 = 55;
