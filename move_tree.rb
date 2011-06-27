@@ -307,8 +307,8 @@ class MoveTree
     return s if s and
       (@current_pos_node.analyzed_depth <= MinFullDepth or
       @current_node.strong_siblings(1).size < MinDepthMoves or
+      @current_node.strong_siblings(1).first.score < s.score  or # to avoid an horizon effect: queen is taken early in the game
       Time.now-@start_time < MinTime
-      #s.score < @current_node.strong_siblings(1).first.score
       )
 
     # ensuring that pv has at least MinDepth moves after deepening some moves
